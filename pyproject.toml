@@ -1,13 +1,25 @@
 [project]
 name = "google-news-trends-mcp"
 version = "0.1.0"
-description = "Add your description here"
+description = "An MCP server to access Google News and Google Trends."
 readme = "README.md"
 requires-python = ">=3.10.18"
 authors = [
     { name = "Jesse Manek", email = "jesse.manek@gmail.com" },
 ]
-license = { text = "MIT" }
+keywords = [
+    "google",
+    "news",
+    "trends",
+    "mcp",
+    "fastmcp",
+    "llm",
+    "nlp",
+    "gnews",
+    "newspaper",
+]
+license = "MIT"
+license-files = ["LICENSE"]
 dependencies = [
     "asyncio>=3.4.3",
     "click>=8.2.1",
@@ -47,3 +59,8 @@ addopts = [
 ]
 asyncio_mode = "auto"
 pythonpath = "src"
+
+[project.urls]
+Homepage = "https://github.com/jmanek/google-news-trends-mcp"
+Repository = "https://github.com/jmanek/google-news-trends-mcp"
+Issues = "https://github.com/jmanek/google-news-trends-mcp/issues"
