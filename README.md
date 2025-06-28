@@ -25,7 +25,7 @@ pip install google-news-trends-mcp
 After installation, you can run it as a script using:
 
 ```bash
-python -m google-news-trends-mcp
+python -m google_news_trends_mcp
 ```
 
 ## Configuration
@@ -57,7 +57,7 @@ Add to your Claude settings:
   "mcpServers": {
     "google-news-trends": {
       "command": "python",
-      "args": ["-m", "google-news-trends-mcp"]
+      "args": ["-m", "google_news_trends_mcp"]
     }
   }
 }
@@ -92,7 +92,7 @@ Add to your Claude settings:
     "servers": {
       "google-news-trends": {
         "command": "python",
-        "args": ["-m", "google-news-trends-mcp"]
+        "args": ["-m", "google_news_trends_mcp"]
       }
     }
   }
