@@ -1,0 +1,49 @@
+[project]
+name = "google-news-trends-mcp"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10.18"
+authors = [
+    { name = "Jesse Manek", email = "jesse.manek@gmail.com" },
+]
+license = { text = "MIT" }
+dependencies = [
+    "asyncio>=3.4.3",
+    "click>=8.2.1",
+    "cloudscraper>=1.2.71",
+    "fastmcp>=2.9.2",
+    "gnews>=0.4.1",
+    "googlenewsdecoder>=0.1.7",
+    "lxml[html-clean]>=6.0.0",
+    "newspaper4k>=0.9.3.1",
+    "nltk>=3.9.1",
+    "playwright>=1.53.0",
+    "pydantic>=2.11.7",
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.0.0",
+    "trendspy>=0.1.6",
+]
+
+[project.scripts]
+google-news-trends-mcp = "google_news_trends_mcp.server:main"
+google-news-trends = "google_news_trends_mcp.cli:cli"
+
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+dev = [
+    "anyio>=4.9.0",
+    "pytest-asyncio>=1.0.0",
+]
+
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
+asyncio_mode = "auto"
+pythonpath = "src"
