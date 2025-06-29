@@ -8,7 +8,7 @@ The returned data currently uses a lot of tokens, so it is recommended to always
 - Search Google News articles based on keyword, location, topic
 - Get top news stories from Google News
 - Google Trends keywords base on location
-- Optional NLP processing to summarize articles and extract keywords
+- Optional NLP to summarize articles and extract keywords
 
 ## Installation
 

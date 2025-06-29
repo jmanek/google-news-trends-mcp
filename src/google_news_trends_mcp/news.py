@@ -24,10 +24,8 @@ from contextlib import asynccontextmanager
 tr = Trends()
 
 scraper = cloudscraper.create_scraper(
-    # Challenge handling
     interpreter="js2py",  # Best compatibility for v3 challenges
     delay=5,  # Extra time for complex challenges
-    # Stealth mode
     # enable_stealth=True,
     # stealth_options={
     #     'min_delay': 2.0,
@@ -36,15 +34,13 @@ scraper = cloudscraper.create_scraper(
     #     'randomize_headers': True,
     #     'browser_quirks': True
     # },
-    # Browser emulation
     browser="chrome",
-    # Debug mode
     debug=False,
 )
 
 google_news = GNews(
     language="en",
-    exclude_websites=["mensjournal.com"],
+    # exclude_websites=[],
 )
 
 playwright = None
@@ -66,7 +62,6 @@ def shutdown_browser():
 
 
 async def get_browser() -> Browser:
-    global browser
     if browser is None:
         await startup_browser()
     return browser
@@ -88,12 +83,10 @@ async def download_article_with_playwright(url) -> newspaper.Article | None:
     """
     try:
         async with browser_context() as context:
-            # context = await new_context()
             page = await context.new_page()
             await page.goto(url, wait_until="domcontentloaded")
             await asyncio.sleep(2)  # Wait for the page to load completely
             content = await page.content()
-            # await context.close()
             article = newspaper.article(url, input_html=content, language="en")
             return article
     except Exception as e:
@@ -133,15 +126,13 @@ async def download_article(url: str, nlp: bool = True) -> newspaper.Article | No
             print(f"Error downloading article with cloudscraper from {url}\n {e.args}")
 
     try:
-        if article is None:
+        if article is None or not article.text:
             # If newspaper failed, try downloading with Playwright
             print(f"Retrying with Playwright for {url}")
             article = await download_article_with_playwright(url)
         article.parse()
         if nlp:
             article.nlp()
-        if article.publish_date:
-            article.publish_date = article.publish_date.isoformat()
     except Exception as e:
         print(f"Error parsing article from {url}\n {e.args}")
         return None
