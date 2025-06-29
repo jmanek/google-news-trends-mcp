@@ -164,8 +164,6 @@ async def get_news_by_keyword(
     period: is the number of days to look back for articles.
     max_results: is the maximum number of results to return.
     nlp: If True, will perform NLP on the articles to extract keywords and summary.
-    Returns:
-        list[newspaper.Article]: A list of newspaper.Article objects containing the articles.
     """
     google_news.period = f"{period}d"
     google_news.max_results = max_results
@@ -184,8 +182,6 @@ async def get_top_news(
     period: is the number of days to look back for top articles.
     max_results: is the maximum number of results to return.
     nlp: If True, will perform NLP on the articles to extract keywords and summary.
-    Returns:
-        list[newspaper.Article]: A list of newspaper.Article objects containing the top news articles.
     """
     google_news.period = f"{period}d"
     google_news.max_results = max_results
@@ -204,8 +200,6 @@ async def get_news_by_location(
     period: is the number of days to look back for articles.
     max_results: is the maximum number of results to return.
     nlp: If True, will perform NLP on the articles to extract keywords and summary.
-    Returns:
-        list[newspaper.Article]: A list of newspaper.Article objects containing the articles for the specified location
     """
     google_news.period = f"{period}d"
     google_news.max_results = max_results
@@ -232,8 +226,6 @@ async def get_news_by_topic(
     period: is the number of days to look back for articles.
     max_results: is the maximum number of results to return.
     nlp: If True, will perform NLP on the articles to extract keywords and summary.
-    Returns:
-        list[newspaper.Article]: A list of newspaper.Article objects containing the articles for the specified topic
     """
     google_news.period = f"{period}d"
     google_news.max_results = max_results
@@ -253,9 +245,6 @@ async def get_trending_terms(
     geo: is the country code, e.g. 'US', 'GB', 'IN', etc.
     full_data: if True, returns full data for each trend, otherwise returns only the trend and volume.
     max_results: is the maximum number of results to return, default is 100.
-    Returns:
-        list[tuple[str, int]]: A list of tuples containing the trend keyword and its volume.
-        If full_data is True, each tuple will also contain additional data such as related queries and trend type.
     """
     try:
         trends = list(tr.trending_now(geo=geo))
