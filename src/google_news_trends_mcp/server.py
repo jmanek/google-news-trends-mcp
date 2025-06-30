@@ -246,8 +246,14 @@ async def get_trending_terms(
     trends = await news.get_trending_terms(
         geo=geo, full_data=full_data, max_results=max_results
     )
-    return [TrendingTermOut(**tt.__dict__) for tt in trends]
-
+    if not full_data:
+        # Only return keyword and volume fields
+        return [
+            TrendingTermOut(keyword=tt["keyword"], volume=tt["volume"]) for tt in trends
+        ]
+    else:
+        # Assume each tt is a TrendingTerm object
+        return [TrendingTermOut(**tt.__dict__) for tt in trends]
 
 def main():
     mcp.run()
