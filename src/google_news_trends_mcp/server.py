@@ -1,10 +1,11 @@
-from fastmcp import FastMCP
+from fastmcp import FastMCP, Context
 from fastmcp.exceptions import ToolError
 from fastmcp.server.dependencies import get_context
 from pydantic import BaseModel, Field
 from typing import Optional
 from google_news_trends_mcp import news
 from typing import Annotated
+from newspaper import settings as newspaper_settings
 from fastmcp.server.middleware.timing import TimingMiddleware
 from fastmcp.server.middleware.logging import LoggingMiddleware
 from fastmcp.server.middleware.rate_limiting import RateLimitingMiddleware
@@ -132,11 +133,49 @@ mcp.add_middleware(TimingMiddleware())  # Time actual execution
 mcp.add_middleware(LoggingMiddleware())  # Log everything
 
 
+# Configure newspaper settings for article extraction
+def set_newspaper_article_fields(full_data: bool = False):
+    if full_data:
+        newspaper_settings.article_json_fields = [
+            "url",
+            "read_more_link",
+            "language",
+            "title",
+            "top_image",
+            "meta_img",
+            "images",
+            "movies",
+            "keywords",
+            "keyword_scores",
+            "meta_keywords",
+            "tags",
+            "authors",
+            "publish_date",
+            "summary",
+            "meta_description",
+            "meta_lang",
+            "meta_favicon",
+            "meta_site_name",
+            "canonical_link",
+            "text",
+        ]
+    else:
+        newspaper_settings.article_json_fields = [
+            "url",
+            "title",
+            "text",
+            "publish_date",
+            "summary",
+            "keywords",
+        ]
+
+
 @mcp.tool(
     description=news.get_news_by_keyword.__doc__,
     tags={"news", "articles", "keyword"},
 )
 async def get_news_by_keyword(
+    ctx: Context,
     keyword: Annotated[str, Field(description="Search term to find articles.")],
     period: Annotated[
         int, Field(description="Number of days to look back for articles.", ge=1)
@@ -146,14 +185,20 @@ async def get_news_by_keyword(
     ] = 10,
     nlp: Annotated[
         bool, Field(description="Whether to perform NLP on the articles.")
-    ] = True,
+    ] = False,
+    full_data: Annotated[
+        bool, Field(description="Return full data for each article.")
+    ] = False,
 ) -> list[ArticleOut]:
+    set_newspaper_article_fields(full_data)
     articles = await news.get_news_by_keyword(
         keyword=keyword,
         period=period,
         max_results=max_results,
         nlp=nlp,
+        report_progress=ctx.report_progress,
     )
+    await ctx.report_progress(progress=len(articles), total=len(articles))
     return [ArticleOut(**a.to_json(False)) for a in articles]
 
 
@@ -162,6 +207,7 @@ async def get_news_by_keyword(
     tags={"news", "articles", "location"},
 )
 async def get_news_by_location(
+    ctx: Context,
     location: Annotated[str, Field(description="Name of city/state/country.")],
     period: Annotated[
         int, Field(description="Number of days to look back for articles.", ge=1)
@@ -171,14 +217,20 @@ async def get_news_by_location(
     ] = 10,
     nlp: Annotated[
         bool, Field(description="Whether to perform NLP on the articles.")
-    ] = True,
+    ] = False,
+    full_data: Annotated[
+        bool, Field(description="Return full data for each article.")
+    ] = False,
 ) -> list[ArticleOut]:
+    set_newspaper_article_fields(full_data)
     articles = await news.get_news_by_location(
         location=location,
         period=period,
         max_results=max_results,
         nlp=nlp,
+        report_progress=ctx.report_progress,
     )
+    await ctx.report_progress(progress=len(articles), total=len(articles))
     return [ArticleOut(**a.to_json(False)) for a in articles]
 
 
@@ -186,6 +238,7 @@ async def get_news_by_location(
     description=news.get_news_by_topic.__doc__, tags={"news", "articles", "topic"}
 )
 async def get_news_by_topic(
+    ctx: Context,
     topic: Annotated[str, Field(description="Topic to search for articles.")],
     period: Annotated[
         int, Field(description="Number of days to look back for articles.", ge=1)
@@ -195,19 +248,26 @@ async def get_news_by_topic(
     ] = 10,
     nlp: Annotated[
         bool, Field(description="Whether to perform NLP on the articles.")
-    ] = True,
+    ] = False,
+    full_data: Annotated[
+        bool, Field(description="Return full data for each article.")
+    ] = False,
 ) -> list[ArticleOut]:
+    set_newspaper_article_fields(full_data)
     articles = await news.get_news_by_topic(
         topic=topic,
         period=period,
         max_results=max_results,
         nlp=nlp,
+        report_progress=ctx.report_progress,
     )
+    await ctx.report_progress(progress=len(articles), total=len(articles))
     return [ArticleOut(**a.to_json(False)) for a in articles]
 
 
 @mcp.tool(description=news.get_top_news.__doc__, tags={"news", "articles", "top"})
 async def get_top_news(
+    ctx: Context,
     period: Annotated[
         int, Field(description="Number of days to look back for top articles.", ge=1)
     ] = 3,
@@ -216,13 +276,19 @@ async def get_top_news(
     ] = 10,
     nlp: Annotated[
         bool, Field(description="Whether to perform NLP on the articles.")
-    ] = True,
+    ] = False,
+    full_data: Annotated[
+        bool, Field(description="Return full data for each article.")
+    ] = False,
 ) -> list[ArticleOut]:
+    set_newspaper_article_fields(full_data)
     articles = await news.get_top_news(
         period=period,
         max_results=max_results,
         nlp=nlp,
+        report_progress=ctx.report_progress,
     )
+    await ctx.report_progress(progress=len(articles), total=len(articles))
     return [ArticleOut(**a.to_json(False)) for a in articles]
 
 
@@ -243,17 +309,21 @@ async def get_trending_terms(
         int, Field(description="Maximum number of results to return.", ge=1)
     ] = 100,
 ) -> list[TrendingTermOut]:
-    trends = await news.get_trending_terms(
-        geo=geo, full_data=full_data, max_results=max_results
-    )
+
     if not full_data:
-        # Only return keyword and volume fields
+        trends = await news.get_trending_terms(
+            geo=geo, full_data=False, max_results=max_results
+        )
         return [
-            TrendingTermOut(keyword=tt["keyword"], volume=tt["volume"]) for tt in trends
+            TrendingTermOut(keyword=str(tt["keyword"]), volume=tt["volume"])
+            for tt in trends
         ]
-    else:
-        # Assume each tt is a TrendingTerm object
-        return [TrendingTermOut(**tt.__dict__) for tt in trends]
+
+    trends = await news.get_trending_terms(
+        geo=geo, full_data=True, max_results=max_results
+    )
+    return [TrendingTermOut(**tt.__dict__) for tt in trends]
+
 
 def main():
     mcp.run()

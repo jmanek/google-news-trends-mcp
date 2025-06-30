@@ -17,10 +17,11 @@ import cloudscraper
 from playwright.async_api import async_playwright, Browser, Playwright
 from trendspy import Trends, TrendKeyword
 import click
-from typing import Optional, cast
+from typing import Optional, cast, overload, Literal, Awaitable
 import atexit
 from contextlib import asynccontextmanager
 import logging
+from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +53,8 @@ google_news = GNews(
 
 playwright: Optional[Playwright] = None
 browser: Optional[Browser] = None
+
+ProgressCallback = Callable[[float, Optional[float]], Awaitable[None]]
 
 
 async def startup_browser():
@@ -97,7 +100,9 @@ async def download_article_with_playwright(url) -> newspaper.Article | None:
             article = newspaper.article(url, input_html=content, language="en")
             return article
     except Exception as e:
-        logging.warning(f"Error downloading article with Playwright from {url}\n {e.args}")
+        logging.warning(
+            f"Error downloading article with Playwright from {url}\n {e.args}"
+        )
         return None
 
 
@@ -130,7 +135,9 @@ async def download_article(url: str, nlp: bool = True) -> newspaper.Article | No
                     f"Failed to download article with cloudscraper from {url}, status code: {response.status_code}"
                 )
         except Exception as e:
-            logging.debug(f"Error downloading article with cloudscraper from {url}\n {e.args}")
+            logging.debug(
+                f"Error downloading article with cloudscraper from {url}\n {e.args}"
+            )
 
     try:
         if article is None or not article.text:
@@ -148,23 +155,35 @@ async def download_article(url: str, nlp: bool = True) -> newspaper.Article | No
 
 
 async def process_gnews_articles(
-    gnews_articles: list[dict], nlp: bool = True
-) -> list["newspaper.Article"]:
+    gnews_articles: list[dict],
+    nlp: bool = True,
+    report_progress: Optional[ProgressCallback] = None,
+) -> list[newspaper.Article]:
     """
     Process a list of Google News articles and download them (async).
+    Optionally report progress via report_progress callback.
     """
     articles = []
-    for gnews_article in gnews_articles:
+    total = len(gnews_articles)
+    for idx, gnews_article in enumerate(gnews_articles):
         article = await download_article(gnews_article["url"], nlp=nlp)
         if article is None or not article.text:
-            logging.debug(f"Failed to download article from {gnews_article['url']}:\n{article}")
+            logging.debug(
+                f"Failed to download article from {gnews_article['url']}:\n{article}"
+            )
             continue
         articles.append(article)
+        if report_progress:
+            await report_progress(idx, total)
     return articles
 
 
 async def get_news_by_keyword(
-    keyword: str, period=7, max_results: int = 10, nlp: bool = True
+    keyword: str,
+    period=7,
+    max_results: int = 10,
+    nlp: bool = True,
+    report_progress: Optional[ProgressCallback] = None,
 ) -> list[newspaper.Article]:
     """
     Find articles by keyword using Google News.
@@ -177,14 +196,21 @@ async def get_news_by_keyword(
     google_news.max_results = max_results
     gnews_articles = google_news.get_news(keyword)
     if not gnews_articles:
-        logging.debug(f"No articles found for keyword '{keyword}' in the last {period} days.")
+        logging.debug(
+            f"No articles found for keyword '{keyword}' in the last {period} days."
+        )
         return []
-    return await process_gnews_articles(gnews_articles, nlp=nlp)
+    return await process_gnews_articles(
+        gnews_articles, nlp=nlp, report_progress=report_progress
+    )
 
 
 async def get_top_news(
-    period: int = 3, max_results: int = 10, nlp: bool = True
-) -> list["newspaper.Article"]:
+    period: int = 3,
+    max_results: int = 10,
+    nlp: bool = True,
+    report_progress: Optional[ProgressCallback] = None,
+) -> list[newspaper.Article]:
     """
     Get top news stories from Google News.
     period: is the number of days to look back for top articles.
@@ -197,11 +223,17 @@ async def get_top_news(
     if not gnews_articles:
         logging.debug("No top news articles found.")
         return []
-    return await process_gnews_articles(gnews_articles, nlp=nlp)
+    return await process_gnews_articles(
+        gnews_articles, nlp=nlp, report_progress=report_progress
+    )
 
 
 async def get_news_by_location(
-    location: str, period=7, max_results: int = 10, nlp: bool = True
+    location: str,
+    period=7,
+    max_results: int = 10,
+    nlp: bool = True,
+    report_progress: Optional[ProgressCallback] = None,
 ) -> list[newspaper.Article]:
     """Find articles by location using Google News.
     location: is the name of city/state/country
@@ -213,13 +245,21 @@ async def get_news_by_location(
     google_news.max_results = max_results
     gnews_articles = google_news.get_news_by_location(location)
     if not gnews_articles:
-        logging.debug(f"No articles found for location '{location}' in the last {period} days.")
+        logging.debug(
+            f"No articles found for location '{location}' in the last {period} days."
+        )
         return []
-    return await process_gnews_articles(gnews_articles, nlp=nlp)
+    return await process_gnews_articles(
+        gnews_articles, nlp=nlp, report_progress=report_progress
+    )
 
 
 async def get_news_by_topic(
-    topic: str, period=7, max_results: int = 10, nlp: bool = True
+    topic: str,
+    period=7,
+    max_results: int = 10,
+    nlp: bool = True,
+    report_progress: Optional[ProgressCallback] = None,
 ) -> list[newspaper.Article]:
     """Find articles by topic using Google News.
     topic is one of
@@ -239,9 +279,27 @@ async def get_news_by_topic(
     google_news.max_results = max_results
     gnews_articles = google_news.get_news_by_topic(topic)
     if not gnews_articles:
-        logging.debug(f"No articles found for topic '{topic}' in the last {period} days.")
+        logging.debug(
+            f"No articles found for topic '{topic}' in the last {period} days."
+        )
         return []
-    return await process_gnews_articles(gnews_articles, nlp=nlp)
+    return await process_gnews_articles(
+        gnews_articles, nlp=nlp, report_progress=report_progress
+    )
+
+
+@overload
+async def get_trending_terms(
+    geo: str = "US", full_data: Literal[False] = False, max_results: int = 100
+) -> list[dict[str, int]]:
+    pass
+
+
+@overload
+async def get_trending_terms(
+    geo: str = "US", full_data: Literal[True] = True, max_results: int = 100
+) -> list[TrendKeyword]:
+    pass
 
 
 async def get_trending_terms(
@@ -260,7 +318,9 @@ async def get_trending_terms(
             :max_results
         ]
         if not full_data:
-            return [{"keyword": trend.keyword, "volume": trend.volume} for trend in trends]
+            return [
+                {"keyword": trend.keyword, "volume": trend.volume} for trend in trends
+            ]
         return trends
     except Exception as e:
         logging.warning(f"Error fetching trending terms: {e}")
