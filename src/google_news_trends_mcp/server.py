@@ -223,8 +223,6 @@ async def get_top_news(
         max_results=max_results,
         nlp=nlp,
     )
-    ctx = get_context()
-    await ctx.debug(f"Top Articles:\n{articles[0].to_json(False)}")
     return [ArticleOut(**a.to_json(False)) for a in articles]
 
 
@@ -248,11 +246,6 @@ async def get_trending_terms(
     trends = await news.get_trending_terms(
         geo=geo, full_data=full_data, max_results=max_results
     )
-    ctx = get_context()
-    await ctx.debug(f"Found {(trends)} trending terms")
-    if not full_data:
-        # return [TrendingTermOut(keyword=tt[0], volume=tt[1]) for tt in trends]
-        return [TrendingTermOut(keyword=tt[0], volume=tt[1]) for tt in trends]
     return [TrendingTermOut(**tt.__dict__) for tt in trends]
 
 

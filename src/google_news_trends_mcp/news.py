@@ -14,12 +14,19 @@ from gnews import GNews
 import newspaper  # newspaper4k
 from googlenewsdecoder import gnewsdecoder
 import cloudscraper
-from playwright.async_api import async_playwright, Browser
+from playwright.async_api import async_playwright, Browser, Playwright
 from trendspy import Trends, TrendKeyword
 import click
-from typing import Optional
+from typing import Optional, cast
 import atexit
 from contextlib import asynccontextmanager
+import logging
+
+logger = logging.getLogger(__name__)
+
+for logname in logging.root.manager.loggerDict:
+    if logname.startswith("newspaper"):
+        logging.getLogger(logname).setLevel(logging.ERROR)
 
 tr = Trends()
 
@@ -43,8 +50,8 @@ google_news = GNews(
     # exclude_websites=[],
 )
 
-playwright = None
-browser: Browser = None
+playwright: Optional[Playwright] = None
+browser: Optional[Browser] = None
 
 
 async def startup_browser():
@@ -64,7 +71,7 @@ def shutdown_browser():
 async def get_browser() -> Browser:
     if browser is None:
         await startup_browser()
-    return browser
+    return cast(Browser, browser)
 
 
 @asynccontextmanager
@@ -73,7 +80,7 @@ async def browser_context():
     try:
         yield context
     finally:
-        print("Closing browser context...")
+        logging.debug("Closing browser context...")
         await context.close()
 
 
@@ -90,7 +97,7 @@ async def download_article_with_playwright(url) -> newspaper.Article | None:
             article = newspaper.article(url, input_html=content, language="en")
             return article
     except Exception as e:
-        print(f"Error downloading article with Playwright from {url}\n {e.args}")
+        logging.warning(f"Error downloading article with Playwright from {url}\n {e.args}")
         return None
 
 
@@ -105,36 +112,37 @@ async def download_article(url: str, nlp: bool = True) -> newspaper.Article | No
             if decoded_url.get("status"):
                 url = decoded_url["decoded_url"]
             else:
-                print("Failed to decode Google News RSS link:")
+                logging.debug("Failed to decode Google News RSS link:")
                 return None
         except Exception as err:
-            print(f"Error while decoding url {url}\n {err.args}")
+            logging.warning(f"Error while decoding url {url}\n {err.args}")
     try:
         article = newspaper.article(url)
     except Exception as e:
-        print(f"Error downloading article with newspaper from {url}\n {e.args}")
+        logging.debug(f"Error downloading article with newspaper from {url}\n {e.args}")
         try:
             # Retry with cloudscraper
             response = scraper.get(url)
             if response.status_code < 400:
                 article = newspaper.article(url, input_html=response.text)
             else:
-                print(
+                logging.debug(
                     f"Failed to download article with cloudscraper from {url}, status code: {response.status_code}"
                 )
         except Exception as e:
-            print(f"Error downloading article with cloudscraper from {url}\n {e.args}")
+            logging.debug(f"Error downloading article with cloudscraper from {url}\n {e.args}")
 
     try:
         if article is None or not article.text:
             # If newspaper failed, try downloading with Playwright
-            print(f"Retrying with Playwright for {url}")
+            logging.debug(f"Retrying with Playwright for {url}")
             article = await download_article_with_playwright(url)
+        article = cast(newspaper.Article, article)
         article.parse()
         if nlp:
             article.nlp()
     except Exception as e:
-        print(f"Error parsing article from {url}\n {e.args}")
+        logging.warning(f"Error parsing article from {url}\n {e.args}")
         return None
     return article
 
@@ -149,7 +157,7 @@ async def process_gnews_articles(
     for gnews_article in gnews_articles:
         article = await download_article(gnews_article["url"], nlp=nlp)
         if article is None or not article.text:
-            print(f"Failed to download article from {gnews_article['url']}:\n{article}")
+            logging.debug(f"Failed to download article from {gnews_article['url']}:\n{article}")
             continue
         articles.append(article)
     return articles
@@ -169,7 +177,7 @@ async def get_news_by_keyword(
     google_news.max_results = max_results
     gnews_articles = google_news.get_news(keyword)
     if not gnews_articles:
-        print(f"No articles found for keyword '{keyword}' in the last {period} days.")
+        logging.debug(f"No articles found for keyword '{keyword}' in the last {period} days.")
         return []
     return await process_gnews_articles(gnews_articles, nlp=nlp)
 
@@ -187,7 +195,7 @@ async def get_top_news(
     google_news.max_results = max_results
     gnews_articles = google_news.get_top_news()
     if not gnews_articles:
-        print("No top news articles found.")
+        logging.debug("No top news articles found.")
         return []
     return await process_gnews_articles(gnews_articles, nlp=nlp)
 
@@ -205,7 +213,7 @@ async def get_news_by_location(
     google_news.max_results = max_results
     gnews_articles = google_news.get_news_by_location(location)
     if not gnews_articles:
-        print(f"No articles found for location '{location}' in the last {period} days.")
+        logging.debug(f"No articles found for location '{location}' in the last {period} days.")
         return []
     return await process_gnews_articles(gnews_articles, nlp=nlp)
 
@@ -231,14 +239,14 @@ async def get_news_by_topic(
     google_news.max_results = max_results
     gnews_articles = google_news.get_news_by_topic(topic)
     if not gnews_articles:
-        print(f"No articles found for topic '{topic}' in the last {period} days.")
+        logging.debug(f"No articles found for topic '{topic}' in the last {period} days.")
         return []
     return await process_gnews_articles(gnews_articles, nlp=nlp)
 
 
 async def get_trending_terms(
     geo: str = "US", full_data: bool = False, max_results: int = 100
-) -> list[tuple[str, int]] | list[TrendKeyword]:
+) -> list[dict[str, int]] | list[TrendKeyword]:
     """
     Returns google trends for a specific geo location.
     Default is US.
@@ -252,10 +260,10 @@ async def get_trending_terms(
             :max_results
         ]
         if not full_data:
-            return [(trend.keyword, trend.volume) for trend in trends]
+            return [{"keyword": trend.keyword, "volume": trend.volume} for trend in trends]
         return trends
     except Exception as e:
-        print(f"Error fetching trending terms: {e}")
+        logging.warning(f"Error fetching trending terms: {e}")
         return []
 
 
@@ -303,4 +311,4 @@ def save_article_to_json(article: newspaper.Article, filename: str = "") -> None
             filename += ".json"
     with open(filename, "w") as f:
         json.dump(article_data, f, indent=4)
-    print(f"Article saved to {filename}")
+    logging.debug(f"Article saved to {filename}")

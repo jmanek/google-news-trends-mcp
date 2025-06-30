@@ -107,7 +107,10 @@ def trending(geo, full_data, max_results):
     if trending_terms:
         print("Trending terms:")
         for term in trending_terms:
-            print(f"- {term}")
+            if isinstance(term, dict):
+                print(f"{term['keyword']:<40} - {term['volume']}")
+            else:
+                print(term)
     else:
         print("No trending terms found.")
 

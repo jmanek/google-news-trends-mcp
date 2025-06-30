@@ -19,7 +19,6 @@ async def test_get_news_by_keyword(mcp_server):
             article = json.loads(article.text)[
                 0
             ]  # Assuming articles are returned as JSON strings
-            print(article)  # For debugging purposes
             assert "title" in article
             assert "url" in article
 
@@ -32,7 +31,6 @@ async def test_get_news_by_location(mcp_server):
         assert len(result) <= 2
         for article in result:
             article = json.loads(article.text)[0]
-            print(article)
             assert "title" in article
             assert "url" in article
 
@@ -45,7 +43,6 @@ async def test_get_news_by_topic(mcp_server):
         assert len(result) <= 2
         for article in result:
             article = json.loads(article.text)[0]
-            print(article)  # For debugging purposes
             assert "title" in article
             assert "url" in article
 
@@ -70,6 +67,5 @@ async def test_get_trending_terms(mcp_server):
         assert len(result) <= 3
         for item in result:
             item = json.loads(item.text)[0]
-            print(item)
             assert "keyword" in item
             assert "volume" in item
