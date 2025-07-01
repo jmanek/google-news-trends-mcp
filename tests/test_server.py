@@ -11,7 +11,7 @@ def mcp_server():
 
 async def test_get_news_by_keyword(mcp_server):
     async with Client(mcp_server) as client:
-        params = {"keyword": "AI", "period": 3, "max_results": 2, "nlp": True}
+        params = {"keyword": "AI", "period": 3, "max_results": 2}
         result = await client.call_tool("get_news_by_keyword", params)
         assert isinstance(result, list)
         assert len(result) <= 2
@@ -23,7 +23,7 @@ async def test_get_news_by_keyword(mcp_server):
 
 async def test_get_news_by_location(mcp_server):
     async with Client(mcp_server) as client:
-        params = {"location": "California", "period": 3, "max_results": 2, "nlp": False}
+        params = {"location": "California", "period": 3, "max_results": 2}
         result = await client.call_tool("get_news_by_location", params)
         assert isinstance(result, list)
         assert len(result) <= 2
@@ -35,7 +35,7 @@ async def test_get_news_by_location(mcp_server):
 
 async def test_get_news_by_topic(mcp_server):
     async with Client(mcp_server) as client:
-        params = {"topic": "TECHNOLOGY", "period": 3, "max_results": 2, "nlp": True}
+        params = {"topic": "TECHNOLOGY", "period": 3, "max_results": 2}
         result = await client.call_tool("get_news_by_topic", params)
         assert isinstance(result, list)
         assert len(result) <= 2
@@ -47,7 +47,7 @@ async def test_get_news_by_topic(mcp_server):
 
 async def test_get_top_news(mcp_server):
     async with Client(mcp_server) as client:
-        params = {"period": 2, "max_results": 2, "nlp": False}
+        params = {"period": 2, "max_results": 2}
         result = await client.call_tool("get_top_news", params)
         assert isinstance(result, list)
         assert len(result) <= 2
