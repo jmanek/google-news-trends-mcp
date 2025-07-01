@@ -100,9 +100,7 @@ async def download_article_with_playwright(url) -> newspaper.Article | None:
             article = newspaper.article(url, input_html=content, language="en")
             return article
     except Exception as e:
-        logging.warning(
-            f"Error downloading article with Playwright from {url}\n {e.args}"
-        )
+        logging.warning(f"Error downloading article with Playwright from {url}\n {e.args}")
         return None
 
 
@@ -135,9 +133,7 @@ async def download_article(url: str, nlp: bool = True) -> newspaper.Article | No
                     f"Failed to download article with cloudscraper from {url}, status code: {response.status_code}"
                 )
         except Exception as e:
-            logging.debug(
-                f"Error downloading article with cloudscraper from {url}\n {e.args}"
-            )
+            logging.debug(f"Error downloading article with cloudscraper from {url}\n {e.args}")
 
     try:
         if article is None or not article.text:
@@ -168,9 +164,7 @@ async def process_gnews_articles(
     for idx, gnews_article in enumerate(gnews_articles):
         article = await download_article(gnews_article["url"], nlp=nlp)
         if article is None or not article.text:
-            logging.debug(
-                f"Failed to download article from {gnews_article['url']}:\n{article}"
-            )
+            logging.debug(f"Failed to download article from {gnews_article['url']}:\n{article}")
             continue
         articles.append(article)
         if report_progress:
@@ -196,13 +190,9 @@ async def get_news_by_keyword(
     google_news.max_results = max_results
     gnews_articles = google_news.get_news(keyword)
     if not gnews_articles:
-        logging.debug(
-            f"No articles found for keyword '{keyword}' in the last {period} days."
-        )
+        logging.debug(f"No articles found for keyword '{keyword}' in the last {period} days.")
         return []
-    return await process_gnews_articles(
-        gnews_articles, nlp=nlp, report_progress=report_progress
-    )
+    return await process_gnews_articles(gnews_articles, nlp=nlp, report_progress=report_progress)
 
 
 async def get_top_news(
@@ -223,9 +213,7 @@ async def get_top_news(
     if not gnews_articles:
         logging.debug("No top news articles found.")
         return []
-    return await process_gnews_articles(
-        gnews_articles, nlp=nlp, report_progress=report_progress
-    )
+    return await process_gnews_articles(gnews_articles, nlp=nlp, report_progress=report_progress)
 
 
 async def get_news_by_location(
@@ -245,13 +233,9 @@ async def get_news_by_location(
     google_news.max_results = max_results
     gnews_articles = google_news.get_news_by_location(location)
     if not gnews_articles:
-        logging.debug(
-            f"No articles found for location '{location}' in the last {period} days."
-        )
+        logging.debug(f"No articles found for location '{location}' in the last {period} days.")
         return []
-    return await process_gnews_articles(
-        gnews_articles, nlp=nlp, report_progress=report_progress
-    )
+    return await process_gnews_articles(gnews_articles, nlp=nlp, report_progress=report_progress)
 
 
 async def get_news_by_topic(
@@ -279,13 +263,9 @@ async def get_news_by_topic(
     google_news.max_results = max_results
     gnews_articles = google_news.get_news_by_topic(topic)
     if not gnews_articles:
-        logging.debug(
-            f"No articles found for topic '{topic}' in the last {period} days."
-        )
+        logging.debug(f"No articles found for topic '{topic}' in the last {period} days.")
         return []
-    return await process_gnews_articles(
-        gnews_articles, nlp=nlp, report_progress=report_progress
-    )
+    return await process_gnews_articles(gnews_articles, nlp=nlp, report_progress=report_progress)
 
 
 @overload
@@ -314,13 +294,9 @@ async def get_trending_terms(
     """
     try:
         trends = list(tr.trending_now(geo=geo))
-        trends = list(sorted(trends, key=lambda tt: tt.volume, reverse=True))[
-            :max_results
-        ]
+        trends = list(sorted(trends, key=lambda tt: tt.volume, reverse=True))[:max_results]
         if not full_data:
-            return [
-                {"keyword": trend.keyword, "volume": trend.volume} for trend in trends
-            ]
+            return [{"keyword": trend.keyword, "volume": trend.volume} for trend in trends]
         return trends
     except Exception as e:
         logging.warning(f"Error fetching trending terms: {e}")

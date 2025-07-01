@@ -7,7 +7,7 @@ An MCP server to access Google News and Google Trends.  Does not rely on any pai
 - Search Google News articles based on keyword, location, topic
 - Get top news stories from Google News
 - Google Trends keywords base on location
-- Optional NLP to summarize articles and extract keywords
+- Optional LLM Sampling and NLP to summarize articles and extract keywords
 
 ## Installation
 
@@ -41,7 +41,7 @@ Add to your Claude settings:
   "mcpServers": {
     "google-news-trends": {
       "command": "uvx",
-      "args": ["google-news-trends-mcp"]
+      "args": ["google-news-trends-mcp@latest"]
     }
   }
 }
@@ -74,7 +74,7 @@ Add to your Claude settings:
     "servers": {
       "google-news-trends": {
         "command": "uvx",
-        "args": ["google-news-trends-mcp"]
+        "args": ["google-news-trends-mcp@latest"]
       }
     }
   }
