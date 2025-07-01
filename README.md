@@ -112,7 +112,7 @@ The following MCP tools are available:
 | **get_top_news**         | Fetch the top news stories from Google News.                       |
 | **get_trending_keywords**| Return trending keywords from Google Trends for a specified location.|
 
-All of the news related tools have an option to summarize the text of the article using NLP (nltk)
+All of the news related tools have an option to summarize the text of the article using LLM Sampling (if supported) or NLP
 
 
 ## CLI
