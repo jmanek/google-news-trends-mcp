@@ -134,15 +134,14 @@ async def summarize_article(article: Article, ctx: Context) -> None:
     if article.text:
         prompt = f"Please provide a concise summary of the following news article:\n\n{article.text}"
         response = await ctx.sample(prompt)
-        # response = cast(TextContent, response)
         if isinstance(response, TextContent):
             if not response.text:
-                await ctx.warning("NLP response is empty. Unable to summarize article.")
+                await ctx.warning("LLM Sampling response is empty. Unable to summarize article.")
                 article.summary = "No summary available."
             else:
                 article.summary = response.text
         else:
-            await ctx.warning("NLP response is not a TextContent object. Unable to summarize article.")
+            await ctx.warning("LLM Sampling response is not a TextContent object. Unable to summarize article.")
             article.summary = "No summary available."
     else:
         article.summary = "No summary available."
