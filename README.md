@@ -6,7 +6,7 @@ An MCP server to access Google News and Google Trends.  Does not rely on any pai
 
 - Search Google News articles based on keyword, location, topic
 - Get top news stories from Google News
-- Google Trends keywords base on location
+- Google Trends keywords based on location
 - Optional LLM Sampling and NLP to summarize articles and extract keywords
 
 ## Installation
