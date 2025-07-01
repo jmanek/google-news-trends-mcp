@@ -182,10 +182,6 @@ async def get_news_by_keyword(
 ) -> list[newspaper.Article]:
     """
     Find articles by keyword using Google News.
-    keyword: is the search term to find articles.
-    period: is the number of days to look back for articles.
-    max_results: is the maximum number of results to return.
-    nlp: If True, will perform NLP on the articles to extract keywords and summary.
     """
     google_news.period = f"{period}d"
     google_news.max_results = max_results
@@ -204,9 +200,6 @@ async def get_top_news(
 ) -> list[newspaper.Article]:
     """
     Get top news stories from Google News.
-    period: is the number of days to look back for top articles.
-    max_results: is the maximum number of results to return.
-    nlp: If True, will perform NLP on the articles to extract keywords and summary.
     """
     google_news.period = f"{period}d"
     google_news.max_results = max_results
@@ -225,10 +218,6 @@ async def get_news_by_location(
     report_progress: Optional[ProgressCallback] = None,
 ) -> list[newspaper.Article]:
     """Find articles by location using Google News.
-    location: is the name of city/state/country
-    period: is the number of days to look back for articles.
-    max_results: is the maximum number of results to return.
-    nlp: If True, will perform NLP on the articles to extract keywords and summary.
     """
     google_news.period = f"{period}d"
     google_news.max_results = max_results
@@ -256,9 +245,6 @@ async def get_news_by_topic(
     PUBLIC HEALTH, MENTAL HEALTH, MEDICINE, SPACE, WILDLIFE, ENVIRONMENT, NEUROSCIENCE, PHYSICS,
     GEOLOGY, PALEONTOLOGY, SOCIAL SCIENCES, EDUCATION, JOBS, ONLINE EDUCATION, HIGHER EDUCATION,
     VEHICLES, ARTS-DESIGN, BEAUTY, FOOD, TRAVEL, SHOPPING, HOME, OUTDOORS, FASHION.
-    period: is the number of days to look back for articles.
-    max_results: is the maximum number of results to return.
-    nlp: If True, will perform NLP on the articles to extract keywords and summary.
     """
     google_news.period = f"{period}d"
     google_news.max_results = max_results
@@ -288,10 +274,6 @@ async def get_trending_terms(
 ) -> list[dict[str, int]] | list[TrendKeyword]:
     """
     Returns google trends for a specific geo location.
-    Default is US.
-    geo: is the country code, e.g. 'US', 'GB', 'IN', etc.
-    full_data: if True, returns full data for each trend, otherwise returns only the trend and volume.
-    max_results: is the maximum number of results to return, default is 100.
     """
     try:
         trends = list(tr.trending_now(geo=geo))
