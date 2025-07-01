@@ -16,8 +16,7 @@ import cloudscraper
 from playwright.async_api import async_playwright, Browser, Playwright
 from trendspy import Trends, TrendKeyword
 from typing import Optional, cast, overload, Literal, Awaitable
-import atexit
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, AsyncContextDecorator
 import logging
 from collections.abc import Callable
 
@@ -55,34 +54,56 @@ browser: Optional[Browser] = None
 ProgressCallback = Callable[[float, Optional[float]], Awaitable[None]]
 
 
-async def startup_browser():
-    global playwright, browser
-    playwright = await async_playwright().start()
-    browser = await playwright.chromium.launch(headless=True)
+class BrowserManager(AsyncContextDecorator):
+    playwright: Optional[Playwright] = None
+    browser: Optional[Browser] = None
+    _lock = asyncio.Lock()
 
+    @classmethod
+    async def _get_browser(cls) -> Browser:
+        if cls.browser is None:
+            async with cls._lock:
+                if cls.browser is None:
+                    await cls._startup()
+        return cast(Browser, cls.browser)
 
-@atexit.register
-def shutdown_browser():
-    if browser:
-        asyncio.run(browser.close())
-    if playwright:
-        asyncio.run(playwright.stop())
+    @classmethod
+    async def _startup(cls):
+        logger.info("Starting browser...")
+        cls.playwright = await async_playwright().start()
+        cls.browser = await cls.playwright.chromium.launch(headless=True)
 
+    @classmethod
+    async def _shutdown(cls):
+        logger.info("Shutting down browser...")
+        if cls.browser:
+            await cls.browser.close()
+            cls.browser = None
+        if cls.playwright:
+            await cls.playwright.stop()
+            cls.playwright = None
 
-async def get_browser() -> Browser:
-    if browser is None:
-        await startup_browser()
-    return cast(Browser, browser)
+    @classmethod
+    def browser_context(cls):
+        @asynccontextmanager
+        async def _browser_context_cm():
+            browser_inst = await cls._get_browser()
+            context = await browser_inst.new_context()
+            logging.debug("Created browser context...")
+            try:
+                yield context
+            finally:
+                logging.debug("Closing browser context...")
+                await context.close()
 
+        return _browser_context_cm()
 
-@asynccontextmanager
-async def browser_context():
-    context = await (await get_browser()).new_context()
-    try:
-        yield context
-    finally:
-        logging.debug("Closing browser context...")
-        await context.close()
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *exc):
+        await self._shutdown()
+        return False
 
 
 async def download_article_with_playwright(url) -> newspaper.Article | None:
@@ -90,7 +111,7 @@ async def download_article_with_playwright(url) -> newspaper.Article | None:
     Download an article using Playwright to handle complex websites (async).
     """
     try:
-        async with browser_context() as context:
+        async with BrowserManager.browser_context() as context:
             page = await context.new_page()
             await page.goto(url, wait_until="domcontentloaded")
             await asyncio.sleep(2)  # Wait for the page to load completely
@@ -144,6 +165,7 @@ async def download_article(url: str) -> newspaper.Article | None:
         return None
     article = download_article_with_scraper(url)
     if article is None or not article.text:
+        logger.debug("Attempting to download article with playwright")
         article = await download_article_with_playwright(url)
     return article
 
@@ -217,8 +239,7 @@ async def get_news_by_location(
     nlp: bool = True,
     report_progress: Optional[ProgressCallback] = None,
 ) -> list[newspaper.Article]:
-    """Find articles by location using Google News.
-    """
+    """Find articles by location using Google News."""
     google_news.period = f"{period}d"
     google_news.max_results = max_results
     gnews_articles = google_news.get_news_by_location(location)

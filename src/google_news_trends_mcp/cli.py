@@ -7,6 +7,7 @@ from google_news_trends_mcp.news import (
     get_trending_terms,
     get_top_news,
     save_article_to_json,
+    BrowserManager,
 )
 
 
@@ -27,9 +28,13 @@ def cli():
 )
 @click.option("--no-nlp", is_flag=True, default=False, help="Disable NLP processing for articles.")
 def keyword(keyword, period, max_results, no_nlp):
-    articles = asyncio.run(get_news_by_keyword(keyword, period=period, max_results=max_results, nlp=not no_nlp))
-    # asyncio.run(articles)  # Ensure the articles are fetched asynchronously
-    print_articles(articles)
+    @BrowserManager()
+    async def _keyword():
+        articles = await get_news_by_keyword(keyword, period=period, max_results=max_results, nlp=not no_nlp)
+        print_articles(articles)
+        print(f"Found {len(articles)} articles for keyword '{keyword}'.")
+
+    asyncio.run(_keyword())
 
 
 @cli.command(help=get_news_by_location.__doc__)
@@ -44,8 +49,13 @@ def keyword(keyword, period, max_results, no_nlp):
 )
 @click.option("--no-nlp", is_flag=True, default=False, help="Disable NLP processing for articles.")
 def location(location, period, max_results, no_nlp):
-    articles = asyncio.run(get_news_by_location(location, period=period, max_results=max_results, nlp=not no_nlp))
-    print_articles(articles)
+    @BrowserManager()
+    async def _location():
+        articles = await get_news_by_location(location, period=period, max_results=max_results, nlp=not no_nlp)
+        print_articles(articles)
+        print(f"Found {len(articles)} articles for location '{location}'.")
+
+    asyncio.run(_location())
 
 
 @cli.command(help=get_news_by_topic.__doc__)
@@ -60,8 +70,13 @@ def location(location, period, max_results, no_nlp):
 )
 @click.option("--no-nlp", is_flag=True, default=False, help="Disable NLP processing for articles.")
 def topic(topic, period, max_results, no_nlp):
-    articles = asyncio.run(get_news_by_topic(topic, period=period, max_results=max_results, nlp=not no_nlp))
-    print_articles(articles)
+    @BrowserManager()
+    async def _topic():
+        articles = await get_news_by_topic(topic, period=period, max_results=max_results, nlp=not no_nlp)
+        print_articles(articles)
+        print(f"Found {len(articles)} articles for topic '{topic}'.")
+
+    asyncio.run(_topic())
 
 
 @cli.command(help=get_trending_terms.__doc__)
@@ -75,16 +90,20 @@ def topic(topic, period, max_results, no_nlp):
     help="Maximum number of results to return.",
 )
 def trending(geo, full_data, max_results):
-    trending_terms = asyncio.run(get_trending_terms(geo=geo, full_data=full_data, max_results=max_results))
-    if trending_terms:
-        print("Trending terms:")
-        for term in trending_terms:
-            if isinstance(term, dict):
-                print(f"{term['keyword']:<40} - {term['volume']}")
-            else:
-                print(term)
-    else:
-        print("No trending terms found.")
+    # Browser not used for Google Trends
+    async def _trending():
+        trending_terms = await get_trending_terms(geo=geo, full_data=full_data, max_results=max_results)
+        if trending_terms:
+            print("Trending terms:")
+            for term in trending_terms:
+                if isinstance(term, dict):
+                    print(f"{term['keyword']:<40} - {term['volume']}")
+                else:
+                    print(term)
+        else:
+            print("No trending terms found.")
+
+    asyncio.run(_trending())
 
 
 @cli.command(help=get_top_news.__doc__)
@@ -98,9 +117,13 @@ def trending(geo, full_data, max_results):
 )
 @click.option("--no-nlp", is_flag=True, default=False, help="Disable NLP processing for articles.")
 def top(period, max_results, no_nlp):
-    articles = asyncio.run(get_top_news(max_results=max_results, period=period, nlp=not no_nlp))
-    print_articles(articles)
-    print(f"Found {len(articles)} top articles.")
+    @BrowserManager()
+    async def _top():
+        articles = await get_top_news(max_results=max_results, period=period, nlp=not no_nlp)
+        print_articles(articles)
+        print(f"Found {len(articles)} top articles.")
+
+    asyncio.run(_top())
 
 
 def print_articles(articles):

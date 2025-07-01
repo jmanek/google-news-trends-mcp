@@ -1,6 +1,6 @@
 [project]
 name = "google-news-trends-mcp"
-version = "0.1.10"
+version = "0.2.0"
 description = "An MCP server to access Google News and Google Trends."
 readme = "README.md"
 requires-python = ">=3.10.18"
@@ -32,8 +32,6 @@ dependencies = [
     "nltk>=3.9.1",
     "playwright>=1.53.0",
     "pydantic>=2.11.7",
-    "pytest>=8.4.1",
-    "pytest-asyncio>=1.0.0",
     "trendspy>=0.1.6",
 ]
 
@@ -49,7 +47,9 @@ build-backend = "setuptools.build_meta"
 [dependency-groups]
 dev = [
     "anyio>=4.9.0",
+    "pytest>=8.4.1",
     "pytest-asyncio>=1.0.0",
+    "ruff>=0.12.1",
 ]
 
 
@@ -66,4 +66,7 @@ Repository = "https://github.com/jmanek/google-news-trends-mcp"
 Issues = "https://github.com/jmanek/google-news-trends-mcp/issues"
 
 [tool.black]
+line-length = 120
+
+[tool.ruff]
 line-length = 120

@@ -7,8 +7,10 @@ from fastmcp.server.middleware.error_handling import ErrorHandlingMiddleware
 from mcp.types import TextContent
 from pydantic import BaseModel, Field, model_serializer
 from google_news_trends_mcp import news
+from google_news_trends_mcp.news import BrowserManager
 from newspaper import settings as newspaper_settings
 from newspaper.article import Article
+from contextlib import asynccontextmanager
 
 
 class BaseModelClean(BaseModel):
@@ -82,9 +84,16 @@ class TrendingTermOut(BaseModelClean):
     normalized_keyword: Annotated[Optional[str], Field(description="Normalized form of the keyword.")] = None
 
 
+@asynccontextmanager
+async def lifespan(app: FastMCP):
+    async with BrowserManager():
+        yield
+
+
 mcp = FastMCP(
     name="google-news-trends",
     instructions="This server provides tools to search, analyze, and summarize Google News articles and Google Trends",
+    lifespan=lifespan,
     on_duplicate_tools="replace",
 )
 
@@ -328,7 +337,6 @@ async def get_trending_terms(
     ] = False,
     max_results: Annotated[int, Field(description="Maximum number of results to return.", ge=1)] = 100,
 ) -> list[TrendingTermOut]:
-
     if not full_data:
         trends = await news.get_trending_terms(geo=geo, full_data=False, max_results=max_results)
         return [TrendingTermOut(keyword=str(tt["keyword"]), volume=tt["volume"]) for tt in trends]
