@@ -16,7 +16,9 @@ async def test_get_news_by_keyword(mcp_server):
         assert isinstance(result, list)
         assert len(result) <= 2
         for article in result:
-            article = json.loads(article.text)[0]  # Assuming articles are returned as JSON strings
+            article = json.loads(article.text)
+            if isinstance(article, list):
+                article = article[0]  # Assuming articles are returned as JSON strings
             assert "title" in article
             assert "url" in article
 
@@ -28,7 +30,9 @@ async def test_get_news_by_location(mcp_server):
         assert isinstance(result, list)
         assert len(result) <= 2
         for article in result:
-            article = json.loads(article.text)[0]
+            article = json.loads(article.text)
+            if isinstance(article, list):
+                article = article[0]
             assert "title" in article
             assert "url" in article
 
@@ -40,7 +44,9 @@ async def test_get_news_by_topic(mcp_server):
         assert isinstance(result, list)
         assert len(result) <= 2
         for article in result:
-            article = json.loads(article.text)[0]
+            article = json.loads(article.text)
+            if isinstance(article, list):
+                article = article[0]
             assert "title" in article
             assert "url" in article
 
@@ -52,7 +58,9 @@ async def test_get_top_news(mcp_server):
         assert isinstance(result, list)
         assert len(result) <= 2
         for article in result:
-            article = json.loads(article.text)[0]
+            article = json.loads(article.text)
+            if isinstance(article, list):
+                article = article[0]
             assert "title" in article
             assert "url" in article
 

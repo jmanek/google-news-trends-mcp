@@ -8,7 +8,6 @@ It will fallback to using Playwright for websites that are difficult to scrape w
 
 import re
 import json
-import time
 import asyncio
 from gnews import GNews
 import newspaper  # newspaper4k
@@ -16,7 +15,6 @@ from googlenewsdecoder import gnewsdecoder
 import cloudscraper
 from playwright.async_api import async_playwright, Browser, Playwright
 from trendspy import Trends, TrendKeyword
-import click
 from typing import Optional, cast, overload, Literal, Awaitable
 import atexit
 from contextlib import asynccontextmanager
@@ -97,28 +95,15 @@ async def download_article_with_playwright(url) -> newspaper.Article | None:
             await page.goto(url, wait_until="domcontentloaded")
             await asyncio.sleep(2)  # Wait for the page to load completely
             content = await page.content()
-            article = newspaper.article(url, input_html=content, language="en")
+            article = newspaper.article(url, input_html=content)
             return article
     except Exception as e:
         logging.warning(f"Error downloading article with Playwright from {url}\n {e.args}")
         return None
 
 
-async def download_article(url: str, nlp: bool = True) -> newspaper.Article | None:
-    """
-    Download an article from a given URL using newspaper4k and cloudscraper (async).
-    """
+def download_article_with_scraper(url) -> newspaper.Article | None:
     article = None
-    if url.startswith("https://news.google.com/rss/"):
-        try:
-            decoded_url = gnewsdecoder(url)
-            if decoded_url.get("status"):
-                url = decoded_url["decoded_url"]
-            else:
-                logging.debug("Failed to decode Google News RSS link:")
-                return None
-        except Exception as err:
-            logging.warning(f"Error while decoding url {url}\n {err.args}")
     try:
         article = newspaper.article(url)
     except Exception as e:
@@ -134,19 +119,32 @@ async def download_article(url: str, nlp: bool = True) -> newspaper.Article | No
                 )
         except Exception as e:
             logging.debug(f"Error downloading article with cloudscraper from {url}\n {e.args}")
+    return article
 
-    try:
-        if article is None or not article.text:
-            # If newspaper failed, try downloading with Playwright
-            logging.debug(f"Retrying with Playwright for {url}")
-            article = await download_article_with_playwright(url)
-        article = cast(newspaper.Article, article)
-        article.parse()
-        if nlp:
-            article.nlp()
-    except Exception as e:
-        logging.warning(f"Error parsing article from {url}\n {e.args}")
+
+def decode_url(url: str) -> str:
+    if url.startswith("https://news.google.com/rss/"):
+        try:
+            decoded_url = gnewsdecoder(url)
+            if decoded_url.get("status"):
+                url = decoded_url["decoded_url"]
+            else:
+                logging.debug("Failed to decode Google News RSS link:")
+                return ""
+        except Exception as err:
+            logging.warning(f"Error while decoding url {url}\n {err.args}")
+    return url
+
+
+async def download_article(url: str) -> newspaper.Article | None:
+    """
+    Download an article from a given URL using newspaper4k and cloudscraper (async).
+    """
+    if not (url := decode_url(url)):
         return None
+    article = download_article_with_scraper(url)
+    if article is None or not article.text:
+        article = await download_article_with_playwright(url)
     return article
 
 
@@ -162,10 +160,13 @@ async def process_gnews_articles(
     articles = []
     total = len(gnews_articles)
     for idx, gnews_article in enumerate(gnews_articles):
-        article = await download_article(gnews_article["url"], nlp=nlp)
+        article = await download_article(gnews_article["url"])
         if article is None or not article.text:
             logging.debug(f"Failed to download article from {gnews_article['url']}:\n{article}")
             continue
+        article.parse()
+        if nlp:
+            article.nlp()
         articles.append(article)
         if report_progress:
             await report_progress(idx, total)

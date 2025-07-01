@@ -1,7 +1,5 @@
-from typing import Annotated, cast, Optional, Any, Literal, TYPE_CHECKING
+from typing import Annotated, Optional, Any, TYPE_CHECKING
 from fastmcp import FastMCP, Context
-from fastmcp.exceptions import ToolError
-from fastmcp.server.dependencies import get_context
 from fastmcp.server.middleware.timing import TimingMiddleware
 from fastmcp.server.middleware.logging import LoggingMiddleware
 from fastmcp.server.middleware.rate_limiting import RateLimitingMiddleware
