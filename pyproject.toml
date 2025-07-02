@@ -10,13 +10,12 @@ authors = [
 keywords = [
     "google",
     "news",
+    "rss",
     "trends",
     "mcp",
     "fastmcp",
     "llm",
     "nlp",
-    "gnews",
-    "newspaper",
 ]
 license = "MIT"
 license-files = ["LICENSE"]
