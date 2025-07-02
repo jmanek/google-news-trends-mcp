@@ -48,9 +48,6 @@ google_news = GNews(
     # exclude_websites=[],
 )
 
-playwright: Optional[Playwright] = None
-browser: Optional[Browser] = None
-
 ProgressCallback = Callable[[float, Optional[float]], Awaitable[None]]
 
 

@@ -154,6 +154,19 @@ async def summarize_article(article: Article, ctx: Context) -> None:
         article.summary = "No summary available."
 
 
+async def summarize_articles(articles: list[Article], ctx: Context) -> None:
+    total_articles = len(articles)
+    try:
+        for idx, article in enumerate(articles):
+            await summarize_article(article, ctx)
+            await ctx.report_progress(idx, total_articles)
+    except Exception as err:
+        await ctx.debug(f"Failed to use LLM sampling for article summary:\n{err.args}")
+        for idx, article in enumerate(articles):
+            article.nlp()
+            await ctx.report_progress(idx, total_articles)
+
+
 @mcp.tool(
     description=news.get_news_by_keyword.__doc__,
     tags={"news", "articles", "keyword"},
@@ -185,16 +198,7 @@ async def get_news_by_keyword(
         report_progress=ctx.report_progress,
     )
     if summarize:
-        total_articles = len(articles)
-        try:
-            for idx, article in enumerate(articles):
-                await summarize_article(article, ctx)
-                await ctx.report_progress(idx, total_articles)
-        except Exception as err:
-            await ctx.debug(f"Failed to use LLM sampling for article summary:\n{err.args}")
-            for idx, article in enumerate(articles):
-                article.nlp()
-                await ctx.report_progress(idx, total_articles)
+        await summarize_articles(articles, ctx)
     await ctx.report_progress(progress=len(articles), total=len(articles))
     return [ArticleOut(**a.to_json(False)) for a in articles]
 
@@ -230,16 +234,7 @@ async def get_news_by_location(
         report_progress=ctx.report_progress,
     )
     if summarize:
-        total_articles = len(articles)
-        try:
-            for idx, article in enumerate(articles):
-                await summarize_article(article, ctx)
-                await ctx.report_progress(idx, total_articles)
-        except Exception as err:
-            await ctx.debug(f"Failed to use LLM sampling for article summary:\n{err.args}")
-            for idx, article in enumerate(articles):
-                article.nlp()
-                await ctx.report_progress(idx, total_articles)
+        await summarize_articles(articles, ctx)
     await ctx.report_progress(progress=len(articles), total=len(articles))
     return [ArticleOut(**a.to_json(False)) for a in articles]
 
@@ -272,17 +267,7 @@ async def get_news_by_topic(
         report_progress=ctx.report_progress,
     )
     if summarize:
-        total_articles = len(articles)
-        try:
-            for idx, article in enumerate(articles):
-                await summarize_article(article, ctx)
-                await ctx.report_progress(idx, total_articles)
-        except Exception as err:
-            await ctx.debug(f"Failed to use LLM sampling for article summary:\n{err.args}")
-            for idx, article in enumerate(articles):
-                article.nlp()
-                await ctx.report_progress(idx, total_articles)
-
+        await summarize_articles(articles, ctx)
     await ctx.report_progress(progress=len(articles), total=len(articles))
     return [ArticleOut(**a.to_json(False)) for a in articles]
 
@@ -313,17 +298,7 @@ async def get_top_news(
         report_progress=ctx.report_progress,
     )
     if summarize:
-        total_articles = len(articles)
-        try:
-            for idx, article in enumerate(articles):
-                await summarize_article(article, ctx)
-                await ctx.report_progress(idx, total_articles)
-        except Exception as err:
-            await ctx.debug(f"Failed to use LLM sampling for article summary:\n{err.args}")
-            for idx, article in enumerate(articles):
-                article.nlp()
-                await ctx.report_progress(idx, total_articles)
-
+        await summarize_articles(articles, ctx)
     await ctx.report_progress(progress=len(articles), total=len(articles))
     return [ArticleOut(**a.to_json(False)) for a in articles]
 
@@ -340,7 +315,6 @@ async def get_trending_terms(
     if not full_data:
         trends = await news.get_trending_terms(geo=geo, full_data=False, max_results=max_results)
         return [TrendingTermOut(keyword=str(tt["keyword"]), volume=tt["volume"]) for tt in trends]
-
     trends = await news.get_trending_terms(geo=geo, full_data=True, max_results=max_results)
     return [TrendingTermOut(**tt.__dict__) for tt in trends]
 
