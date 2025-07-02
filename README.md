@@ -1,6 +1,6 @@
 # Google News Trends MCP
 
-An MCP server to access Google News and Google Trends.  Does not rely on any paid APIs.  
+An MCP server to access Google News and Google Trends.
 
 ## Features
 
