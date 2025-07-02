@@ -61,14 +61,15 @@ class BrowserManager(AsyncContextDecorator):
         if cls.browser is None:
             async with cls._lock:
                 if cls.browser is None:
-                    await cls._startup()
+                    logger.info("Starting browser...")
+                    try:
+                        cls.playwright = await async_playwright().start()
+                        cls.browser = await cls.playwright.chromium.launch(headless=True)
+                    except Exception as e:
+                        logger.critical("Browser startup failed", exc_info=e)
+                        raise SystemExit(1)
         return cast(Browser, cls.browser)
 
-    @classmethod
-    async def _startup(cls):
-        logger.info("Starting browser...")
-        cls.playwright = await async_playwright().start()
-        cls.browser = await cls.playwright.chromium.launch(headless=True)
 
     @classmethod
     async def _shutdown(cls):
@@ -86,11 +87,11 @@ class BrowserManager(AsyncContextDecorator):
         async def _browser_context_cm():
             browser_inst = await cls._get_browser()
             context = await browser_inst.new_context()
-            logging.debug("Created browser context...")
+            logger.debug("Created browser context...")
             try:
                 yield context
             finally:
-                logging.debug("Closing browser context...")
+                logger.debug("Closing browser context...")
                 await context.close()
 
         return _browser_context_cm()
@@ -116,7 +117,7 @@ async def download_article_with_playwright(url) -> newspaper.Article | None:
             article = newspaper.article(url, input_html=content)
             return article
     except Exception as e:
-        logging.warning(f"Error downloading article with Playwright from {url}\n {e.args}")
+        logger.warning(f"Error downloading article with Playwright from {url}\n {e.args}")
         return None
 
 
@@ -125,18 +126,18 @@ def download_article_with_scraper(url) -> newspaper.Article | None:
     try:
         article = newspaper.article(url)
     except Exception as e:
-        logging.debug(f"Error downloading article with newspaper from {url}\n {e.args}")
+        logger.debug(f"Error downloading article with newspaper from {url}\n {e.args}")
         try:
             # Retry with cloudscraper
             response = scraper.get(url)
             if response.status_code < 400:
                 article = newspaper.article(url, input_html=response.text)
             else:
-                logging.debug(
+                logger.debug(
                     f"Failed to download article with cloudscraper from {url}, status code: {response.status_code}"
                 )
         except Exception as e:
-            logging.debug(f"Error downloading article with cloudscraper from {url}\n {e.args}")
+            logger.debug(f"Error downloading article with cloudscraper from {url}\n {e.args}")
     return article
 
 
@@ -147,10 +148,10 @@ def decode_url(url: str) -> str:
             if decoded_url.get("status"):
                 url = decoded_url["decoded_url"]
             else:
-                logging.debug("Failed to decode Google News RSS link:")
+                logger.debug("Failed to decode Google News RSS link:")
                 return ""
         except Exception as err:
-            logging.warning(f"Error while decoding url {url}\n {err.args}")
+            logger.warning(f"Error while decoding url {url}\n {err.args}")
     return url
 
 
@@ -181,7 +182,7 @@ async def process_gnews_articles(
     for idx, gnews_article in enumerate(gnews_articles):
         article = await download_article(gnews_article["url"])
         if article is None or not article.text:
-            logging.debug(f"Failed to download article from {gnews_article['url']}:\n{article}")
+            logger.debug(f"Failed to download article from {gnews_article['url']}:\n{article}")
             continue
         article.parse()
         if nlp:
@@ -206,7 +207,7 @@ async def get_news_by_keyword(
     google_news.max_results = max_results
     gnews_articles = google_news.get_news(keyword)
     if not gnews_articles:
-        logging.debug(f"No articles found for keyword '{keyword}' in the last {period} days.")
+        logger.debug(f"No articles found for keyword '{keyword}' in the last {period} days.")
         return []
     return await process_gnews_articles(gnews_articles, nlp=nlp, report_progress=report_progress)
 
@@ -224,7 +225,7 @@ async def get_top_news(
     google_news.max_results = max_results
     gnews_articles = google_news.get_top_news()
     if not gnews_articles:
-        logging.debug("No top news articles found.")
+        logger.debug("No top news articles found.")
         return []
     return await process_gnews_articles(gnews_articles, nlp=nlp, report_progress=report_progress)
 
@@ -241,7 +242,7 @@ async def get_news_by_location(
     google_news.max_results = max_results
     gnews_articles = google_news.get_news_by_location(location)
     if not gnews_articles:
-        logging.debug(f"No articles found for location '{location}' in the last {period} days.")
+        logger.debug(f"No articles found for location '{location}' in the last {period} days.")
         return []
     return await process_gnews_articles(gnews_articles, nlp=nlp, report_progress=report_progress)
 
@@ -268,7 +269,7 @@ async def get_news_by_topic(
     google_news.max_results = max_results
     gnews_articles = google_news.get_news_by_topic(topic)
     if not gnews_articles:
-        logging.debug(f"No articles found for topic '{topic}' in the last {period} days.")
+        logger.debug(f"No articles found for topic '{topic}' in the last {period} days.")
         return []
     return await process_gnews_articles(gnews_articles, nlp=nlp, report_progress=report_progress)
 
@@ -300,7 +301,7 @@ async def get_trending_terms(
             return [{"keyword": trend.keyword, "volume": trend.volume} for trend in trends]
         return trends
     except Exception as e:
-        logging.warning(f"Error fetching trending terms: {e}")
+        logger.warning(f"Error fetching trending terms: {e}")
         return []
 
 
@@ -348,4 +349,4 @@ def save_article_to_json(article: newspaper.Article, filename: str = "") -> None
             filename += ".json"
     with open(filename, "w") as f:
         json.dump(article_data, f, indent=4)
-    logging.debug(f"Article saved to {filename}")
+    logger.debug(f"Article saved to {filename}")
