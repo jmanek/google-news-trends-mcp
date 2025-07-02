@@ -1,7 +1,7 @@
 [project]
 name = "google-news-trends-mcp"
-version = "0.2.0"
-description = "An MCP server to access Google News and Google Trends."
+version = "0.2.2"
+description = "An MCP server to access RSS feeds of Google News and Google Trends"
 readme = "README.md"
 requires-python = ">=3.10.18"
 authors = [
@@ -70,3 +70,6 @@ line-length = 120
 
 [tool.ruff]
 line-length = 120
+
+[tool.uv]
+keyring-provider = "subprocess"

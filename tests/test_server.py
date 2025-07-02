@@ -67,7 +67,7 @@ async def test_get_top_news(mcp_server):
 
 async def test_get_trending_terms(mcp_server):
     async with Client(mcp_server) as client:
-        params = {"max_results": 3, "geo": "US", "full_data": False}
+        params = {"geo": "US", "full_data": True}
         result = await client.call_tool("get_trending_terms", params)
         assert isinstance(result, list)
         assert len(result) <= 3

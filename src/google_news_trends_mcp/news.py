@@ -14,7 +14,7 @@ import newspaper  # newspaper4k
 from googlenewsdecoder import gnewsdecoder
 import cloudscraper
 from playwright.async_api import async_playwright, Browser, Playwright
-from trendspy import Trends, TrendKeyword
+from trendspy import Trends, TrendKeywordLite
 from typing import Optional, cast, overload, Literal, Awaitable
 from contextlib import asynccontextmanager, AsyncContextDecorator
 import logging
@@ -276,27 +276,27 @@ async def get_news_by_topic(
 
 @overload
 async def get_trending_terms(
-    geo: str = "US", full_data: Literal[False] = False, max_results: int = 100
+    geo: str = "US", full_data: Literal[False] = False
 ) -> list[dict[str, int]]:
     pass
 
 
 @overload
 async def get_trending_terms(
-    geo: str = "US", full_data: Literal[True] = True, max_results: int = 100
-) -> list[TrendKeyword]:
+    geo: str = "US", full_data: Literal[True] = True
+) -> list[TrendKeywordLite]:
     pass
 
 
 async def get_trending_terms(
-    geo: str = "US", full_data: bool = False, max_results: int = 100
-) -> list[dict[str, int]] | list[TrendKeyword]:
+    geo: str = "US", full_data: bool = False
+) -> list[dict[str, int]] | list[TrendKeywordLite]:
     """
     Returns google trends for a specific geo location.
     """
     try:
-        trends = list(tr.trending_now(geo=geo))
-        trends = list(sorted(trends, key=lambda tt: tt.volume, reverse=True))[:max_results]
+        trends = cast(list[TrendKeywordLite], tr.trending_now_by_rss(geo=geo))
+        trends = sorted(trends, key=lambda tt: int(tt.volume[:-1]), reverse=True)
         if not full_data:
             return [{"keyword": trend.keyword, "volume": trend.volume} for trend in trends]
         return trends

@@ -82,17 +82,10 @@ def topic(topic, period, max_results, no_nlp):
 @cli.command(help=get_trending_terms.__doc__)
 @click.option("--geo", type=str, default="US", help="Country code, e.g. 'US', 'GB', 'IN', etc.")
 @click.option("--full-data", is_flag=True, default=False, help="Return full data for each trend.")
-@click.option(
-    "--max-results",
-    "max_results",
-    type=int,
-    default=100,
-    help="Maximum number of results to return.",
-)
-def trending(geo, full_data, max_results):
+def trending(geo, full_data):
     # Browser not used for Google Trends
     async def _trending():
-        trending_terms = await get_trending_terms(geo=geo, full_data=full_data, max_results=max_results)
+        trending_terms = await get_trending_terms(geo=geo, full_data=full_data)
         if trending_terms:
             print("Trending terms:")
             for term in trending_terms:

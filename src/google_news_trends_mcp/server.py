@@ -63,25 +63,16 @@ class TrendingTermArticleOut(BaseModelClean):
 
 class TrendingTermOut(BaseModelClean):
     keyword: Annotated[str, Field(description="Trending keyword.")]
-    volume: Annotated[Optional[int], Field(description="Search volume.")] = None
-    geo: Annotated[Optional[str], Field(description="Geographic location code.")] = None
-    started_timestamp: Annotated[
-        Optional[list],
-        Field(description="When the trend started (year, month, day, hour, minute, second)."),
-    ] = None
-    ended_timestamp: Annotated[
-        Optional[list],
-        Field(description="When the trend ended (year, month, day, hour, minute, second)."),
-    ] = None
-    volume_growth_pct: Annotated[Optional[float], Field(description="Percentage growth in search volume.")] = None
+    volume: Annotated[Optional[str], Field(description="Search volume.")] = None
     trend_keywords: Annotated[Optional[list[str]], Field(description="Related keywords.")] = None
-    topics: Annotated[Optional[list[str | int]], Field(description="Related topics.")] = None
+    link: Annotated[Optional[str], Field(description="URL to more information.")] = None
+    started: Annotated[Optional[int], Field(description="Unix timestamp when the trend started.")] = None
+    picture: Annotated[Optional[str], Field(description="URL to related image.")] = None
+    picture_source: Annotated[Optional[str], Field(description="Source of the picture.")] = None
     news: Annotated[
         Optional[list[TrendingTermArticleOut]],
         Field(description="Related news articles."),
     ] = None
-    news_tokens: Annotated[Optional[list], Field(description="Associated news tokens.")] = None
-    normalized_keyword: Annotated[Optional[str], Field(description="Normalized form of the keyword.")] = None
 
 
 @asynccontextmanager
@@ -310,13 +301,18 @@ async def get_trending_terms(
         bool,
         Field(description="Return full data for each trend. Should be False for most use cases."),
     ] = False,
-    max_results: Annotated[int, Field(description="Maximum number of results to return.", ge=1)] = 100,
 ) -> list[TrendingTermOut]:
     if not full_data:
-        trends = await news.get_trending_terms(geo=geo, full_data=False, max_results=max_results)
+        trends = await news.get_trending_terms(geo=geo, full_data=False)
         return [TrendingTermOut(keyword=str(tt["keyword"]), volume=tt["volume"]) for tt in trends]
-    trends = await news.get_trending_terms(geo=geo, full_data=True, max_results=max_results)
-    return [TrendingTermOut(**tt.__dict__) for tt in trends]
+    trends = await news.get_trending_terms(geo=geo, full_data=True)
+    trends_out = []
+    for trend in trends:
+        trend = trend.__dict__
+        if 'news' in trend:
+            trend["news"] = [TrendingTermArticleOut(**article.__dict__) for article in trend["news"]]
+        trends_out.append(TrendingTermOut(**trend))
+    return trends_out
 
 
 def main():
