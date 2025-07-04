@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   pypi:
@@ -29,14 +29,11 @@ jobs:
       - run: uv publish --trusted-publishing always
 
       - name: Create GitHub Release
-        uses: comnoco/create-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: ncipollo/release-action@v1
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          body: |
-            ✅ Published to PyPI.
-            <!-- Add additional release notes or changelog section here -->
+          artifacts: "dist/*.whl,dist/*.tar.gz"
+          generateReleaseNotes: true
           draft: false
           prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
