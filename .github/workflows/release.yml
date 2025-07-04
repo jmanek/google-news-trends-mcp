@@ -16,14 +16,14 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-      - run: uv sync
-      - run: uv build
+      - uses: astral-sh/setup-uv@v8
+      - run: uv sync -v
+      - run: uv build -v
       - name: Smoke test (wheel)
-        run: uv run --isolated --no-project --with dist/*.whl -m pytest -k test_smoke
+        run: uv run -v --isolated --with dist/*.whl -m pytest -k test_smoke
       - name: Smoke test (source distribution)
-        run: uv run --isolated --no-project --with dist/*.tar.gz -m pytest -k test_smoke
-      - run: uv publish --trusted-publishing always
+        run: uv run -v --isolated --with dist/*.tar.gz -m pytest -k test_smoke
+      - run: uv publish  --trusted-publishing always
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
