@@ -9,6 +9,12 @@ def mcp_server():
     yield mcp
 
 
+async def test_smoke(mcp_server):
+    async with Client(mcp_server) as client:
+        tools = await client.list_tools()
+        assert isinstance(tools, list)
+
+
 async def test_get_news_by_keyword(mcp_server):
     async with Client(mcp_server) as client:
         params = {"keyword": "AI", "period": 3, "max_results": 2}

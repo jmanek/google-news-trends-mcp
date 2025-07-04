@@ -1,0 +1,28 @@
+name: Release
+
+on:
+  push:
+    tags:
+      # Publish on any tag starting with a `v`, e.g. v1.2.3
+      - v*
+
+jobs:
+  pypi:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    # Environment and permissions trusted publishing.
+    environment:
+      # Create this environment in the GitHub repository under Settings -> Environments
+      name: release
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv build
+      # Check that basic features work and we didn't miss to include crucial files
+      - name: Smoke test (wheel)
+        run: uv run --isolated --no-project -p 3.13 --with dist/*.whl -m pytest -k test_smoke
+      - name: Smoke test (source distribution)
+        run: uv run --isolated --no-project -p 3.13 --with dist/*.tar.gz -m pytest -k test_smoke
+      - run: uv publish --trusted-publishing always
