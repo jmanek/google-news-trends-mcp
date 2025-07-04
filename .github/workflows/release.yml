@@ -16,7 +16,7 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v8
+      - uses: astral-sh/setup-uv@v6
       - run: uv sync -v
       - run: uv build -v
       - name: Smoke test (wheel)
