@@ -1,22 +1,11 @@
 [project]
 name = "google-news-trends-mcp"
-version = "0.2.3"
+version = "0.2.4"
 description = "An MCP server to access RSS feeds of Google News and Google Trends"
 readme = "README.md"
 requires-python = ">=3.10.18"
-authors = [
-    { name = "Jesse Manek", email = "jesse.manek@gmail.com" },
-]
-keywords = [
-    "google",
-    "news",
-    "rss",
-    "trends",
-    "mcp",
-    "fastmcp",
-    "llm",
-    "nlp",
-]
+authors = [{ name = "Jesse Manek", email = "jesse.manek@gmail.com" }]
+keywords = ["google", "news", "rss", "trends", "mcp", "fastmcp", "llm", "nlp"]
 license = "MIT"
 license-files = ["LICENSE"]
 dependencies = [
@@ -44,18 +33,11 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [dependency-groups]
-dev = [
-    "anyio>=4.9.0",
-    "pytest>=8.4.1",
-    "pytest-asyncio>=1.0.0",
-    "ruff>=0.12.1",
-]
+dev = ["anyio>=4.9.0", "pytest>=8.4.1", "pytest-asyncio>=1.0.0", "ruff>=0.12.1"]
 
 
 [tool.pytest.ini_options]
-addopts = [
-    "--import-mode=importlib",
-]
+addopts = ["--import-mode=importlib"]
 asyncio_mode = "auto"
 pythonpath = "src"
 

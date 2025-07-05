@@ -1,13 +1,13 @@
 # Google News Trends MCP
 
-An MCP server to access RSS feeds of Google News and Google Trends.
+An MCP server that slurps data from Google News and Google Trends RSS endpoints, optionally distills it with LLM/NLP, and barfs out structured results.
 
 ## Features
 
-- Search Google News RSS feeds for articles based on keyword, location, topic
-- Get top news stories from Google News
-- Google Trends keywords based on location
-- Optional LLM Sampling and NLP to summarize articles and extract keywords
+- Trawl Google News RSS feeds for articles based on keyword, location, topic
+- Ingest top news stories from Google News
+- Snag trending search terms from Google Trends based on geographic input
+- Plug in LLM/NLP pipelines to condense article payloads and extract key concepts
 
 ## Installation
 
