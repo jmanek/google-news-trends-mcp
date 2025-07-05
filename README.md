@@ -1,4 +1,5 @@
 # Google News Trends MCP
+[![smithery badge](https://smithery.ai/badge/@jmanek/google-news-trends-mcp)](https://smithery.ai/server/@jmanek/google-news-trends-mcp)
 
 An MCP server that slurps data from Google News and Google Trends RSS endpoints, optionally distills it with LLM/NLP, and barfs out structured results.
 
@@ -10,6 +11,14 @@ An MCP server that slurps data from Google News and Google Trends RSS endpoints,
 - Plug in LLM/NLP pipelines to condense article payloads and extract key concepts
 
 ## Installation
+
+### Installing via Smithery
+
+To install google-news-trends-mcp for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@jmanek/google-news-trends-mcp):
+
+```bash
+npx -y @smithery/cli install @jmanek/google-news-trends-mcp --client claude
+```
 
 ### Using uv/uvx (recommended)
 
