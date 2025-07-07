@@ -70,7 +70,6 @@ class BrowserManager(AsyncContextDecorator):
                         raise SystemExit(1)
         return cast(Browser, cls.browser)
 
-
     @classmethod
     async def _shutdown(cls):
         logger.info("Shutting down browser...")
@@ -275,22 +274,14 @@ async def get_news_by_topic(
 
 
 @overload
-async def get_trending_terms(
-    geo: str = "US", full_data: Literal[False] = False
-) -> list[dict[str, int]]:
-    pass
+async def get_trending_terms(geo: str = "US", full_data: Literal[False] = False) -> list[dict[str, str]]: ...
 
 
 @overload
-async def get_trending_terms(
-    geo: str = "US", full_data: Literal[True] = True
-) -> list[TrendKeywordLite]:
-    pass
+async def get_trending_terms(geo: str = "US", full_data: Literal[True] = True) -> list[TrendKeywordLite]: ...
 
 
-async def get_trending_terms(
-    geo: str = "US", full_data: bool = False
-) -> list[dict[str, int]] | list[TrendKeywordLite]:
+async def get_trending_terms(geo: str = "US", full_data: bool = False) -> list[dict[str, str]] | list[TrendKeywordLite]:
     """
     Returns google trends for a specific geo location.
     """

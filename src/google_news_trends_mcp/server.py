@@ -128,7 +128,7 @@ def set_newspaper_article_fields(full_data: bool = False):
         ]
 
 
-async def summarize_article(article: Article, ctx: Context) -> None:
+async def llm_summarize_article(article: Article, ctx: Context) -> None:
     if article.text:
         prompt = f"Please provide a concise summary of the following news article:\n\n{article.text}"
         response = await ctx.sample(prompt)
@@ -149,7 +149,7 @@ async def summarize_articles(articles: list[Article], ctx: Context) -> None:
     total_articles = len(articles)
     try:
         for idx, article in enumerate(articles):
-            await summarize_article(article, ctx)
+            await llm_summarize_article(article, ctx)
             await ctx.report_progress(idx, total_articles)
     except Exception as err:
         await ctx.debug(f"Failed to use LLM sampling for article summary:\n{err.args}")
@@ -309,7 +309,7 @@ async def get_trending_terms(
     trends_out = []
     for trend in trends:
         trend = trend.__dict__
-        if 'news' in trend:
+        if "news" in trend:
             trend["news"] = [TrendingTermArticleOut(**article.__dict__) for article in trend["news"]]
         trends_out.append(TrendingTermOut(**trend))
     return trends_out
