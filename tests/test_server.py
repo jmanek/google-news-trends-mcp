@@ -1,9 +1,16 @@
 import pytest
 from fastmcp import Client
 from google_news_trends_mcp.server import mcp
-from google_news_trends_mcp.news import download_article_with_playwright, save_article_to_json, download_article
+from mcp.types import TextContent
+from google_news_trends_mcp.news import (
+    download_article_with_playwright,
+    save_article_to_json,
+    download_article,
+    BrowserManager,
+)
 import json
 from pathlib import Path
+from typing import cast
 
 
 @pytest.fixture
@@ -24,6 +31,7 @@ async def test_get_news_by_keyword(mcp_server):
         assert isinstance(result, list)
         assert len(result) <= 2
         for article in result:
+            article = cast(TextContent, article)
             article = json.loads(article.text)
             if isinstance(article, list):
                 article = article[0]  # Assuming articles are returned as JSON strings
@@ -38,6 +46,7 @@ async def test_get_news_by_location(mcp_server):
         assert isinstance(result, list)
         assert len(result) <= 2
         for article in result:
+            article = cast(TextContent, article)
             article = json.loads(article.text)
             if isinstance(article, list):
                 article = article[0]
@@ -55,6 +64,7 @@ async def test_get_news_by_topic(mcp_server):
         assert isinstance(result, list)
         assert len(result) <= 2
         for article in result:
+            article = cast(TextContent, article)
             article = json.loads(article.text)
             if isinstance(article, list):
                 article = article[0]
@@ -72,6 +82,7 @@ async def test_get_top_news(mcp_server):
         assert isinstance(result, list)
         assert len(result) <= 2
         for article in result:
+            article = cast(TextContent, article)
             article = json.loads(article.text)
             if isinstance(article, list):
                 article = article[0]
@@ -84,6 +95,7 @@ async def test_get_trending_terms(mcp_server):
         params = {"geo": "US", "full_data": True}
         result = await client.call_tool("get_trending_terms", params)
         for item in result:
+            item = cast(TextContent, item)
             item = json.loads(item.text)[0]
             assert "keyword" in item
             assert "volume" in item
@@ -91,6 +103,7 @@ async def test_get_trending_terms(mcp_server):
         params = {"geo": "US", "full_data": False}
         result = await client.call_tool("get_trending_terms", params)
         for item in result:
+            item = cast(TextContent, item)
             item = json.loads(item.text)[0]
             assert "keyword" in item
             assert "volume" in item
@@ -99,8 +112,8 @@ async def test_get_trending_terms(mcp_server):
         assert result == []
 
 
-async def test_browser(mcp_server):
-    async with Client(mcp_server) as client:
+async def test_browser():
+    async with BrowserManager():
         article = await download_article("nytimes.com")
         assert article is None
         article = await download_article_with_playwright(

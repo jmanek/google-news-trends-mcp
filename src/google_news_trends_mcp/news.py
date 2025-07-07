@@ -145,13 +145,12 @@ def decode_url(url: str) -> str:
         try:
             decoded_url = gnewsdecoder(url)
             if decoded_url.get("status"):
-                url = decoded_url["decoded_url"]
+                return decoded_url["decoded_url"]
             else:
                 logger.debug("Failed to decode Google News RSS link:")
-                return ""
         except Exception as err:
             logger.warning(f"Error while decoding url {url}\n {err.args}")
-    return url
+    return ""
 
 
 async def download_article(url: str) -> newspaper.Article | None:
