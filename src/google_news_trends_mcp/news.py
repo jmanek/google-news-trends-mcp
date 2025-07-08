@@ -52,38 +52,41 @@ ProgressCallback = Callable[[float, Optional[float]], Awaitable[None]]
 
 
 class BrowserManager(AsyncContextDecorator):
-    playwright: Optional[Playwright] = None
-    browser: Optional[Browser] = None
+    _playwright: Optional[Playwright] = None
+    _browser: Optional[Browser] = None
     _lock = asyncio.Lock()
+    _class_contexts: int = 0
 
     @classmethod
     async def _get_browser(cls) -> Browser:
-        if cls.browser is None:
+        if cls._browser is None:
             async with cls._lock:
-                if cls.browser is None:
+                if cls._browser is None:
                     logger.info("Starting browser...")
                     try:
-                        cls.playwright = await async_playwright().start()
-                        cls.browser = await cls.playwright.chromium.launch(headless=True)
+                        cls._playwright = await async_playwright().start()
+                        cls._browser = await cls._playwright.chromium.launch(headless=True)
                     except Exception as e:
                         logger.critical("Browser startup failed", exc_info=e)
                         raise SystemExit(1)
-        return cast(Browser, cls.browser)
+        return cast(Browser, cls._browser)
 
     @classmethod
     async def _shutdown(cls):
         logger.info("Shutting down browser...")
-        if cls.browser:
-            await cls.browser.close()
-            cls.browser = None
-        if cls.playwright:
-            await cls.playwright.stop()
-            cls.playwright = None
+        if cls._browser:
+            await cls._browser.close()
+            cls._browser = None
+        if cls._playwright:
+            await cls._playwright.stop()
+            cls._playwright = None
 
     @classmethod
     def browser_context(cls):
         @asynccontextmanager
         async def _browser_context_cm():
+            if cls._class_contexts == 0:
+                raise RuntimeError("BrowserManager used without context. Wrap in 'async with BrowserManager()'.")
             browser_inst = await cls._get_browser()
             context = await browser_inst.new_context()
             logger.debug("Created browser context...")
@@ -96,9 +99,11 @@ class BrowserManager(AsyncContextDecorator):
         return _browser_context_cm()
 
     async def __aenter__(self):
+        type(self)._class_contexts += 1
         return self
 
     async def __aexit__(self, *exc):
+        type(self)._class_contexts -= 1
         await self._shutdown()
         return False
 
@@ -107,17 +112,17 @@ async def download_article_with_playwright(url) -> newspaper.Article | None:
     """
     Download an article using Playwright to handle complex websites (async).
     """
-    try:
-        async with BrowserManager.browser_context() as context:
+    async with BrowserManager.browser_context() as context:
+        try:
             page = await context.new_page()
             await page.goto(url, wait_until="domcontentloaded")
             await asyncio.sleep(2)  # Wait for the page to load completely
             content = await page.content()
             article = newspaper.article(url, input_html=content)
             return article
-    except Exception as e:
-        logger.warning(f"Error downloading article with Playwright from {url}\n {e.args}")
-        return None
+        except Exception as e:
+            logger.warning(f"Error downloading article with Playwright from {url}\n {e.args}")
+            return None
 
 
 def download_article_with_scraper(url) -> newspaper.Article | None:
