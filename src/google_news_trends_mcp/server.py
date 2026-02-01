@@ -11,7 +11,7 @@ from google_news_trends_mcp.news import BrowserManager
 from newspaper import settings as newspaper_settings
 from newspaper.article import Article
 from contextlib import asynccontextmanager
-
+import subprocess
 
 class BaseModelClean(BaseModel):
     @model_serializer
@@ -316,4 +316,5 @@ async def get_trending_terms(
 
 
 def main():
+    subprocess.run(["playwright", "install", "--with-deps"])
     mcp.run()
