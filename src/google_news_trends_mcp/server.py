@@ -296,7 +296,18 @@ async def get_top_news(
 
 @mcp.tool(description=news.get_trending_terms.__doc__, tags={"trends", "google", "trending"})
 async def get_trending_terms(
-    geo: Annotated[str, Field(description="Country code, e.g. 'US', 'GB', 'IN', etc.")] = "US",
+    geo: Annotated[
+        str,
+        Field(
+            description=(
+                "Geographic target for trending terms. Supports four levels of granularity:\n"
+                "- Worldwide: empty string ''\n"
+                "- Country: ISO 3166-1 alpha-2 code, e.g. 'US', 'GB', 'CA'\n"
+                "- Subdivision (state/province/region): ISO 3166-2 format 'CC-XX' or 'CC-XXX', e.g. 'US-CA' (California), 'BE-BRU' (Brussels)\n"
+                "- US metro area: bare Nielsen DMA code (numeric string), e.g. '807' (San Francisco Bay Area), '501' (New York City)"
+            )
+        ),
+    ] = "US",
     full_data: Annotated[
         bool,
         Field(description="Return full data for each trend. Should be False for most use cases."),
