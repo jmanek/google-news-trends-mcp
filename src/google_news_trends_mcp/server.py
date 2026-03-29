@@ -85,7 +85,7 @@ mcp = FastMCP(
     name="google-news-trends",
     instructions="This server provides tools to search, analyze, and summarize Google News articles and Google Trends",
     lifespan=lifespan,
-    on_duplicate_tools="replace",
+    on_duplicate="replace",
 )
 
 mcp.add_middleware(ErrorHandlingMiddleware())  # Handle errors first
@@ -310,7 +310,7 @@ async def get_trending_terms(
     ] = "US",
     full_data: Annotated[
         bool,
-        Field(description="Return full data for each trend. Should be False for most use cases."),
+        Field(description="Return full data for each trend including related news stories."),
     ] = False,
 ) -> list[TrendingTermOut]:
     if not full_data:
