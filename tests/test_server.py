@@ -1,5 +1,7 @@
 import pytest
+from contextlib import asynccontextmanager
 from fastmcp import Client
+from fastmcp.exceptions import ToolError
 from google_news_trends_mcp.server import mcp
 from google_news_trends_mcp import news
 from google_news_trends_mcp.news import (
@@ -91,6 +93,34 @@ def test_scraper_fallback_has_timeout(monkeypatch):
 
     assert news.download_article_with_scraper("https://example.com/news") is None
     assert seen_timeouts == [30]
+
+
+async def test_playwright_navigation_has_timeout(monkeypatch):
+    seen_timeouts = []
+
+    class Page:
+        async def goto(self, *args, **kwargs):
+            seen_timeouts.append(kwargs["timeout"])
+            raise RuntimeError("navigation failed")
+
+    class Context:
+        async def new_page(self):
+            return Page()
+
+    @asynccontextmanager
+    async def fake_browser_context():
+        yield Context()
+
+    monkeypatch.setattr(BrowserManager, "browser_context", classmethod(lambda cls: fake_browser_context()))
+
+    assert await download_article_with_playwright("https://example.com/news") is None
+    assert seen_timeouts == [30_000]
+
+
+async def test_news_tools_reject_unbounded_max_results(mcp_server):
+    async with Client(mcp_server) as client:
+        with pytest.raises(ToolError, match="less than or equal to 25"):
+            await client.call_tool("get_top_news", {"max_results": 26})
 
 
 async def test_get_news_by_keyword(mcp_server):
