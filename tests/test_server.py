@@ -1,6 +1,7 @@
 import pytest
 from fastmcp import Client
 from google_news_trends_mcp.server import mcp
+from google_news_trends_mcp import news
 from google_news_trends_mcp.news import (
     download_article_with_playwright,
     save_article_to_json,
@@ -39,6 +40,57 @@ async def test_download_article():
 
 def _articles(result):
     return result.structured_content.get("result", [])
+
+
+def test_decode_url_preserves_direct_publisher_url():
+    url = "https://example.com/news/story"
+
+    assert news.decode_url(url) == url
+
+
+def test_decode_url_falls_back_when_google_news_decode_fails(monkeypatch):
+    url = "https://news.google.com/rss/articles/example"
+    monkeypatch.setattr(news, "gnewsdecoder", lambda _: {"status": False})
+
+    assert news.decode_url(url) == url
+
+
+async def test_browser_manager_shuts_down_after_final_context(monkeypatch):
+    shutdown_calls = []
+
+    async def fake_shutdown(cls):
+        shutdown_calls.append(True)
+
+    monkeypatch.setattr(BrowserManager, "_shutdown", classmethod(fake_shutdown))
+
+    async with BrowserManager():
+        async with BrowserManager():
+            assert BrowserManager._class_contexts == 2
+        assert BrowserManager._class_contexts == 1
+        assert shutdown_calls == []
+
+    assert BrowserManager._class_contexts == 0
+    assert shutdown_calls == [True]
+
+
+def test_scraper_fallback_has_timeout(monkeypatch):
+    seen_timeouts = []
+
+    def fail_newspaper_article(*args, **kwargs):
+        raise RuntimeError("download failed")
+
+    class Response:
+        status_code = 500
+
+    def fake_get(url, timeout):
+        seen_timeouts.append(timeout)
+        return Response()
+
+    monkeypatch.setattr(news.newspaper, "article", fail_newspaper_article)
+    monkeypatch.setattr(news.scraper, "get", fake_get)
+
+    assert news.download_article_with_scraper("https://example.com/news") is None
+    assert seen_timeouts == [30]
 
 
 async def test_get_news_by_keyword(mcp_server):

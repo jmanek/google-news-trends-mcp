@@ -104,7 +104,8 @@ class BrowserManager(AsyncContextDecorator):
 
     async def __aexit__(self, *exc):
         type(self)._class_contexts -= 1
-        await self._shutdown()
+        if type(self)._class_contexts == 0:
+            await self._shutdown()
         return False
 
 
@@ -115,7 +116,7 @@ async def download_article_with_playwright(url) -> newspaper.Article | None:
     async with BrowserManager.browser_context() as context:
         try:
             page = await context.new_page()
-            await page.goto(url, wait_until="domcontentloaded")
+            await page.goto(url, wait_until="domcontentloaded", timeout=30_000)
             await asyncio.sleep(2)  # Wait for the page to load completely
             content = await page.content()
             article = newspaper.article(url, input_html=content)
@@ -133,7 +134,7 @@ def download_article_with_scraper(url) -> newspaper.Article | None:
         logger.debug(f"Error downloading article with newspaper from {url}\n {e.args}")
         try:
             # Retry with cloudscraper
-            response = scraper.get(url)
+            response = scraper.get(url, timeout=30)
             if response.status_code < 400:
                 article = newspaper.article(url, input_html=response.text)
             else:
@@ -155,7 +156,7 @@ def decode_url(url: str) -> str:
                 logger.debug("Failed to decode Google News RSS link:")
         except Exception as err:
             logger.warning(f"Error while decoding url {url}\n {err.args}")
-    return ""
+    return url
 
 
 async def download_article(url: str) -> newspaper.Article | None:

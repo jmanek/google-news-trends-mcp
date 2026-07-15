@@ -166,7 +166,7 @@ async def get_news_by_keyword(
     ctx: Context,
     keyword: Annotated[str, Field(description="Search term to find articles.")],
     period: Annotated[int, Field(description="Number of days to look back for articles.", ge=1)] = 7,
-    max_results: Annotated[int, Field(description="Maximum number of results to return.", ge=1)] = 10,
+    max_results: Annotated[int, Field(description="Maximum number of results to return.", ge=1, le=25)] = 10,
     full_data: Annotated[
         bool,
         Field(
@@ -202,7 +202,7 @@ async def get_news_by_location(
     ctx: Context,
     location: Annotated[str, Field(description="Name of city/state/country.")],
     period: Annotated[int, Field(description="Number of days to look back for articles.", ge=1)] = 7,
-    max_results: Annotated[int, Field(description="Maximum number of results to return.", ge=1)] = 10,
+    max_results: Annotated[int, Field(description="Maximum number of results to return.", ge=1, le=25)] = 10,
     full_data: Annotated[
         bool,
         Field(
@@ -235,7 +235,7 @@ async def get_news_by_topic(
     ctx: Context,
     topic: Annotated[str, Field(description="Topic to search for articles.")],
     period: Annotated[int, Field(description="Number of days to look back for articles.", ge=1)] = 7,
-    max_results: Annotated[int, Field(description="Maximum number of results to return.", ge=1)] = 10,
+    max_results: Annotated[int, Field(description="Maximum number of results to return.", ge=1, le=25)] = 10,
     full_data: Annotated[
         bool,
         Field(
@@ -267,7 +267,7 @@ async def get_news_by_topic(
 async def get_top_news(
     ctx: Context,
     period: Annotated[int, Field(description="Number of days to look back for top articles.", ge=1)] = 3,
-    max_results: Annotated[int, Field(description="Maximum number of results to return.", ge=1)] = 10,
+    max_results: Annotated[int, Field(description="Maximum number of results to return.", ge=1, le=25)] = 10,
     full_data: Annotated[
         bool,
         Field(
