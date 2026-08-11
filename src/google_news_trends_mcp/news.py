@@ -99,13 +99,15 @@ class BrowserManager(AsyncContextDecorator):
         return _browser_context_cm()
 
     async def __aenter__(self):
-        type(self)._class_contexts += 1
+        async with type(self)._lock:
+            type(self)._class_contexts += 1
         return self
 
     async def __aexit__(self, *exc):
-        type(self)._class_contexts -= 1
-        if type(self)._class_contexts == 0:
-            await self._shutdown()
+        async with type(self)._lock:
+            type(self)._class_contexts -= 1
+            if type(self)._class_contexts == 0:
+                await self._shutdown()
         return False
 
 

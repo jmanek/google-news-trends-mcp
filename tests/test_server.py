@@ -1,3 +1,4 @@
+import asyncio
 import pytest
 from contextlib import asynccontextmanager
 from fastmcp import Client
@@ -73,6 +74,40 @@ async def test_browser_manager_shuts_down_after_final_context(monkeypatch):
 
     assert BrowserManager._class_contexts == 0
     assert shutdown_calls == [True]
+
+
+async def test_browser_manager_waits_for_shutdown_before_reentering(monkeypatch):
+    shutdown_started = asyncio.Event()
+    finish_shutdown = asyncio.Event()
+    entry_attempted = asyncio.Event()
+    entered = asyncio.Event()
+
+    async def fake_shutdown(cls):
+        shutdown_started.set()
+        await finish_shutdown.wait()
+
+    monkeypatch.setattr(BrowserManager, "_shutdown", classmethod(fake_shutdown))
+
+    manager = BrowserManager()
+    await manager.__aenter__()
+    exit_task = asyncio.create_task(manager.__aexit__(None, None, None))
+    await shutdown_started.wait()
+
+    async def enter_next_context():
+        entry_attempted.set()
+        async with BrowserManager():
+            entered.set()
+
+    enter_task = asyncio.create_task(enter_next_context())
+    try:
+        await entry_attempted.wait()
+        assert not entered.is_set()
+    finally:
+        finish_shutdown.set()
+        await asyncio.gather(exit_task, enter_task)
+
+    assert entered.is_set()
+    assert BrowserManager._class_contexts == 0
 
 
 def test_scraper_fallback_has_timeout(monkeypatch):
