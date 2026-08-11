@@ -128,9 +128,10 @@ def set_newspaper_article_fields(full_data: bool = False):
         ]
 
 
-async def llm_summarize_article(article: Article, ctx: Context) -> None:
+async def llm_summarize_article(article: Article, ctx: Context, max_chars: int = 4_000) -> None:
     if article.text:
-        prompt = f"Please provide a concise summary of the following news article:\n\n{article.text}"
+        article_text = article.text if len(article.text) <= max_chars else article.text[:max_chars] + "\n..."
+        prompt = f"Please provide a concise summary of the following news article:\n\n{article_text}"
         response = await ctx.sample(prompt)
         if isinstance(response, TextContent):
             if not response.text:

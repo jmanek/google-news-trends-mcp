@@ -280,6 +280,27 @@ async def get_news_by_topic(
     return await process_gnews_articles(gnews_articles, nlp=nlp, report_progress=report_progress)
 
 
+def parse_trend_volume(volume: Optional[str]) -> int:
+    """Parse Google Trends volume strings like '500+', '10K+', '1.2M' into ints."""
+    raw = (volume or "").strip().upper().rstrip("+")
+    if not raw:
+        return 0
+    multiplier = 1
+    if raw.endswith("K"):
+        multiplier = 1_000
+        raw = raw[:-1]
+    elif raw.endswith("M"):
+        multiplier = 1_000_000
+        raw = raw[:-1]
+    elif raw.endswith("B"):
+        multiplier = 1_000_000_000
+        raw = raw[:-1]
+    try:
+        return int(float(raw) * multiplier)
+    except ValueError:
+        return 0
+
+
 @overload
 async def get_trending_terms(geo: str = "US", full_data: Literal[False] = False) -> list[dict[str, str]]: ...
 
@@ -294,7 +315,7 @@ async def get_trending_terms(geo: str = "US", full_data: bool = False) -> list[d
     """
     try:
         trends = cast(list[TrendKeywordLite], tr.trending_now_by_rss(geo=geo))
-        trends = sorted(trends, key=lambda tt: int(tt.volume[:-1]), reverse=True)
+        trends = sorted(trends, key=lambda tt: parse_trend_volume(tt.volume), reverse=True)
         if not full_data:
             return [{"keyword": trend.keyword, "volume": trend.volume} for trend in trends]
         return trends

@@ -158,6 +158,59 @@ async def test_news_tools_reject_unbounded_max_results(mcp_server):
             await client.call_tool("get_top_news", {"max_results": 26})
 
 
+def test_parse_trend_volume_handles_common_formats():
+    assert news.parse_trend_volume("500+") == 500
+    assert news.parse_trend_volume("2000+") == 2000
+    assert news.parse_trend_volume("10K+") == 10_000
+    assert news.parse_trend_volume("1.5M") == 1_500_000
+    assert news.parse_trend_volume("") == 0
+    assert news.parse_trend_volume("n/a") == 0
+
+
+async def test_get_trending_terms_sorts_without_dropping_bad_volumes(monkeypatch):
+    class FakeTrend:
+        def __init__(self, keyword, volume):
+            self.keyword = keyword
+            self.volume = volume
+
+    fake_trends = [
+        FakeTrend("low", "100+"),
+        FakeTrend("bad", "??"),
+        FakeTrend("high", "10K+"),
+    ]
+    monkeypatch.setattr(news.tr, "trending_now_by_rss", lambda geo: fake_trends)
+
+    result = await news.get_trending_terms(geo="US", full_data=False)
+    assert [item["keyword"] for item in result] == ["high", "low", "bad"]
+
+
+async def test_llm_summarize_article_truncates_long_text():
+    from google_news_trends_mcp.server import llm_summarize_article
+    from mcp.types import TextContent
+
+    class FakeArticle:
+        text = "x" * 5_000
+        summary = None
+
+    prompts = []
+
+    class FakeContext:
+        async def sample(self, prompt):
+            prompts.append(prompt)
+            return TextContent(type="text", text="short summary")
+
+        async def warning(self, message):
+            pass
+
+    article = FakeArticle()
+    await llm_summarize_article(article, FakeContext(), max_chars=100)
+    assert len(prompts) == 1
+    assert prompts[0].endswith("\n...")
+    assert "x" * 100 in prompts[0]
+    assert "x" * 101 not in prompts[0]
+    assert article.summary == "short summary"
+
+
 async def test_get_news_by_keyword(mcp_server):
     async with Client(mcp_server) as client:
         params = {"keyword": "AI", "period": 3, "max_results": 2}
