@@ -19,6 +19,7 @@ def mcp_server():
     yield mcp
 
 
+@pytest.mark.offline
 async def test_smoke(mcp_server):
     async with Client(mcp_server) as client:
         tools = await client.list_tools()
@@ -45,12 +46,14 @@ def _articles(result):
     return result.structured_content.get("result", [])
 
 
+@pytest.mark.offline
 def test_decode_url_preserves_direct_publisher_url():
     url = "https://example.com/news/story"
 
     assert news.decode_url(url) == url
 
 
+@pytest.mark.offline
 def test_decode_url_falls_back_when_google_news_decode_fails(monkeypatch):
     url = "https://news.google.com/rss/articles/example"
     monkeypatch.setattr(news, "gnewsdecoder", lambda _: {"status": False})
@@ -58,6 +61,7 @@ def test_decode_url_falls_back_when_google_news_decode_fails(monkeypatch):
     assert news.decode_url(url) == url
 
 
+@pytest.mark.offline
 async def test_browser_manager_shuts_down_after_final_context(monkeypatch):
     shutdown_calls = []
 
@@ -76,6 +80,7 @@ async def test_browser_manager_shuts_down_after_final_context(monkeypatch):
     assert shutdown_calls == [True]
 
 
+@pytest.mark.offline
 async def test_browser_manager_waits_for_shutdown_before_reentering(monkeypatch):
     shutdown_started = asyncio.Event()
     finish_shutdown = asyncio.Event()
@@ -110,6 +115,7 @@ async def test_browser_manager_waits_for_shutdown_before_reentering(monkeypatch)
     assert BrowserManager._class_contexts == 0
 
 
+@pytest.mark.offline
 def test_scraper_fallback_has_timeout(monkeypatch):
     seen_timeouts = []
 
@@ -130,6 +136,7 @@ def test_scraper_fallback_has_timeout(monkeypatch):
     assert seen_timeouts == [30]
 
 
+@pytest.mark.offline
 async def test_playwright_navigation_has_timeout(monkeypatch):
     seen_timeouts = []
 
@@ -152,6 +159,7 @@ async def test_playwright_navigation_has_timeout(monkeypatch):
     assert seen_timeouts == [30_000]
 
 
+@pytest.mark.offline
 async def test_news_tools_reject_unbounded_max_results(mcp_server):
     async with Client(mcp_server) as client:
         with pytest.raises(ToolError, match="less than or equal to 25"):
