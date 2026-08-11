@@ -110,7 +110,7 @@ The following MCP tools are available:
 | **get_news_by_location** | Retrieve news relevant to a particular location.                   |
 | **get_news_by_topic**    | Get news based on a chosen topic.                                  |
 | **get_top_news**         | Fetch the top news stories from Google News.                       |
-| **get_trending_keywords**| Return trending keywords from Google Trends for a specified location.|
+| **get_trending_terms**   | Return trending keywords from Google Trends for a specified location.|
 
 All of the news related tools have an option to summarize the text of the article using LLM Sampling (if supported) or NLP
 
@@ -144,13 +144,13 @@ npx @modelcontextprotocol/inspector uvx google-news-trends-mcp
 To run from within locally installed project
 
 ```bash
-cd path/to/google/news/tends/mcp
+cd path/to/google-news-trends-mcp
 npx @modelcontextprotocol/inspector uv run google-news-trends-mcp
 ```
 
 ## Testing
 
 ```bash
-cd path/to/google/news/tends/mcp
-python -m pytest
+cd path/to/google-news-trends-mcp
+uv run pytest
 ```
