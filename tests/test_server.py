@@ -158,6 +158,20 @@ async def test_news_tools_reject_unbounded_max_results(mcp_server):
             await client.call_tool("get_top_news", {"max_results": 26})
 
 
+async def test_browser_startup_failure_raises_runtime_error(monkeypatch):
+    BrowserManager._browser = None
+    BrowserManager._playwright = None
+
+    class FakePlaywright:
+        async def start(self):
+            raise OSError("chromium missing")
+
+    monkeypatch.setattr(news, "async_playwright", lambda: FakePlaywright())
+
+    with pytest.raises(RuntimeError, match="Browser startup failed"):
+        await BrowserManager._get_browser()
+
+
 async def test_get_news_by_keyword(mcp_server):
     async with Client(mcp_server) as client:
         params = {"keyword": "AI", "period": 3, "max_results": 2}
