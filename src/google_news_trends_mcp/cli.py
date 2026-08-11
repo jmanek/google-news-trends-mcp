@@ -25,16 +25,17 @@ def cli():
 @click.option(
     "--max-results",
     "max_results",
-    type=int,
+    type=click.IntRange(1, 25),
     default=10,
-    help="Maximum number of results to return.",
+    help="Maximum number of results to return (1-25).",
 )
 @click.option("--no-nlp", is_flag=True, default=False, help="Disable NLP processing for articles.")
-def keyword(keyword, period, max_results, no_nlp):
+@click.option("--save", is_flag=True, default=False, help="Save each article to a JSON file in the current directory.")
+def keyword(keyword, period, max_results, no_nlp, save):
     @BrowserManager()
     async def _keyword():
         articles = await get_news_by_keyword(keyword, period=period, max_results=max_results, nlp=not no_nlp)
-        print_articles(articles)
+        print_articles(articles, save=save)
         logger.info(f"Found {len(articles)} articles for keyword '{keyword}'.")
 
     asyncio.run(_keyword())
@@ -46,16 +47,17 @@ def keyword(keyword, period, max_results, no_nlp):
 @click.option(
     "--max-results",
     "max_results",
-    type=int,
+    type=click.IntRange(1, 25),
     default=10,
-    help="Maximum number of results to return.",
+    help="Maximum number of results to return (1-25).",
 )
 @click.option("--no-nlp", is_flag=True, default=False, help="Disable NLP processing for articles.")
-def location(location, period, max_results, no_nlp):
+@click.option("--save", is_flag=True, default=False, help="Save each article to a JSON file in the current directory.")
+def location(location, period, max_results, no_nlp, save):
     @BrowserManager()
     async def _location():
         articles = await get_news_by_location(location, period=period, max_results=max_results, nlp=not no_nlp)
-        print_articles(articles)
+        print_articles(articles, save=save)
         logger.info(f"Found {len(articles)} articles for location '{location}'.")
 
     asyncio.run(_location())
@@ -67,16 +69,17 @@ def location(location, period, max_results, no_nlp):
 @click.option(
     "--max-results",
     "max_results",
-    type=int,
+    type=click.IntRange(1, 25),
     default=10,
-    help="Maximum number of results to return.",
+    help="Maximum number of results to return (1-25).",
 )
 @click.option("--no-nlp", is_flag=True, default=False, help="Disable NLP processing for articles.")
-def topic(topic, period, max_results, no_nlp):
+@click.option("--save", is_flag=True, default=False, help="Save each article to a JSON file in the current directory.")
+def topic(topic, period, max_results, no_nlp, save):
     @BrowserManager()
     async def _topic():
         articles = await get_news_by_topic(topic, period=period, max_results=max_results, nlp=not no_nlp)
-        print_articles(articles)
+        print_articles(articles, save=save)
         logger.info(f"Found {len(articles)} articles for topic '{topic}'.")
 
     asyncio.run(_topic())
@@ -107,22 +110,23 @@ def trending(geo, full_data):
 @click.option(
     "--max-results",
     "max_results",
-    type=int,
+    type=click.IntRange(1, 25),
     default=10,
-    help="Maximum number of results to return.",
+    help="Maximum number of results to return (1-25).",
 )
 @click.option("--no-nlp", is_flag=True, default=False, help="Disable NLP processing for articles.")
-def top(period, max_results, no_nlp):
+@click.option("--save", is_flag=True, default=False, help="Save each article to a JSON file in the current directory.")
+def top(period, max_results, no_nlp, save):
     @BrowserManager()
     async def _top():
         articles = await get_top_news(max_results=max_results, period=period, nlp=not no_nlp)
-        print_articles(articles)
+        print_articles(articles, save=save)
         logger.info(f"Found {len(articles)} top articles.")
 
     asyncio.run(_top())
 
 
-def print_articles(articles):
+def print_articles(articles, save: bool = False):
     for article in articles:
         logger.info(f"Title: {article.title}")
         logger.info(f"URL: {article.original_url}")
@@ -130,7 +134,8 @@ def print_articles(articles):
         logger.info(f"Publish Date: {article.publish_date}")
         logger.info(f"Top Image: {article.top_image}")
         logger.info(f"Summary: {article.summary}\n")
-        save_article_to_json(article)
+        if save:
+            save_article_to_json(article)
 
 
 if __name__ == "__main__":
