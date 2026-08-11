@@ -43,9 +43,12 @@ dev = [
 
 
 [tool.pytest.ini_options]
-addopts = ["--import-mode=importlib"]
+addopts = ["--import-mode=importlib", "--strict-markers"]
 asyncio_mode = "auto"
 pythonpath = "src"
+markers = [
+    "offline: safe to run without external network services or browser binaries",
+]
 
 [project.urls]
 Homepage = "https://github.com/jmanek/google-news-trends-mcp"
