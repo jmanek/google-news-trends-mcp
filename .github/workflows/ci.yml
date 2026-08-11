@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: Lint & offline tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Install dependencies
+        run: uv sync --group dev
+      - name: Ruff
+        run: uv run ruff check src tests
+      - name: Offline / smoke tests
+        # Skip live Google News/Trends and external-site integration tests.
+        # Offline hardening tests (decode_url, browser lifetime, timeouts, caps)
+        # are selected automatically when present.
+        run: >-
+          uv run pytest -v
+          -k "not (get_news_by_ or get_top_news or get_trending_terms or download_article)"
