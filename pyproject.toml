@@ -9,7 +9,6 @@ keywords = ["google", "news", "rss", "trends", "mcp", "fastmcp", "llm", "nlp"]
 license = "MIT"
 license-files = ["LICENSE"]
 dependencies = [
-    "asyncio>=3.4.3",
     "click>=8.2.1",
     "cloudscraper>=1.2.71",
     "fastmcp>=3",
@@ -51,9 +50,6 @@ pythonpath = "src"
 Homepage = "https://github.com/jmanek/google-news-trends-mcp"
 Repository = "https://github.com/jmanek/google-news-trends-mcp"
 Issues = "https://github.com/jmanek/google-news-trends-mcp/issues"
-
-[tool.black]
-line-length = 120
 
 [tool.ruff]
 line-length = 120
