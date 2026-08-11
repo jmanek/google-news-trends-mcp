@@ -68,7 +68,7 @@ class BrowserManager(AsyncContextDecorator):
                         cls._browser = await cls._playwright.chromium.launch(headless=True)
                     except Exception as e:
                         logger.critical("Browser startup failed", exc_info=e)
-                        raise SystemExit(1)
+                        raise RuntimeError("Browser startup failed") from e
         return cast(Browser, cls._browser)
 
     @classmethod
