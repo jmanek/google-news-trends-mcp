@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10.18"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -600,7 +600,7 @@ wheels = [
 
 [[package]]
 name = "google-news-trends-mcp"
-version = "0.2.9"
+version = "0.2.10"
 source = { editable = "." }
 dependencies = [
     { name = "asyncio" },
