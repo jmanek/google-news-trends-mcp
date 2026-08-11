@@ -152,7 +152,5 @@ npx @modelcontextprotocol/inspector uv run google-news-trends-mcp
 
 ```bash
 cd path/to/google-news-trends-mcp
-uv run pytest -k test_smoke
+uv run pytest
 ```
-
-Live network integration tests are included in `tests/test_server.py` and require outbound access to Google News/Trends plus a Playwright Chromium install (`uv run playwright install chromium`).
